@@ -7,11 +7,26 @@ export default function EditableListName({ listId, initialName }: { listId: stri
   const [isEditing, setIsEditing] = useState(false);
 
   const saveName = async () => {
-    await fetch("/api/lists", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: listId, name }),
-    });
+    try {
+      await fetch("/api/lists", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: listId, name }),
+      });
+
+      // Update localStorage history with new name
+      const rawHistory = localStorage.getItem("shopping_list_history");
+      if (rawHistory) {
+        const history = JSON.parse(rawHistory);
+        const item = history.find((h: any) => h.id === listId);
+        if (item) {
+          item.name = name;
+          localStorage.setItem("shopping_list_history", JSON.stringify(history));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to save list name:", e);
+    }
     setIsEditing(false);
   };
 
