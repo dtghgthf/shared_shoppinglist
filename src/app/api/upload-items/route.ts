@@ -88,7 +88,7 @@ export async function POST(request: Request) {
         "X-Title": "Shopping List Upload",
       },
       body: JSON.stringify({
-        model: "google/gemini-1.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         max_tokens: 1024,
         messages: [
           {
