@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
 import { Item } from "@/lib/types";
+import EditableListName from "@/components/EditableListName";
 import QrCodeDisplay from "@/components/QrCodeDisplay";
 import AddItemForm from "@/components/AddItemForm";
 import UploadItemsForm from "@/components/UploadItemsForm";
 import ShoppingList from "@/components/ShoppingList";
+import HistoryTracker from "@/components/HistoryTracker";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -32,7 +34,9 @@ export default async function ListPage({ params }: Props) {
   const listUrl = `${process.env.NEXT_PUBLIC_APP_URL || ""}/list/${id}`;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div>
+      <HistoryTracker listId={id} listName={list.name} />
+      <div className="flex flex-col gap-10">
       <div className="flex flex-col gap-2">
         <Link
           href="/"
@@ -41,9 +45,7 @@ export default async function ListPage({ params }: Props) {
         >
           ← Zurück
         </Link>
-        <h1 className="heading text-4xl font-normal" style={{ color: "var(--text-primary)" }}>
-          {list.name}
-        </h1>
+        <EditableListName listId={id} initialName={list.name} />
       </div>
 
       <div className="flex flex-col gap-3">
@@ -70,6 +72,7 @@ export default async function ListPage({ params }: Props) {
           Mit Freunden teilen
         </h2>
         <QrCodeDisplay url={listUrl} />
+      </div>
       </div>
     </div>
   );
