@@ -51,8 +51,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "id ist erforderlich" }, { status: 400 });
     }
 
-    // Allow updating: checked, order_index, category
-    const allowed = ["checked", "order_index", "category"];
+    // Allow updating: checked, order_index, category, text
+    const allowed = ["checked", "order_index", "category", "text"];
     const patch: Record<string, unknown> = {};
     for (const key of allowed) {
       if (key in updates) patch[key] = updates[key];

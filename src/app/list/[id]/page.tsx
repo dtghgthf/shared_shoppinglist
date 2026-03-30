@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { Item } from "@/lib/types";
 import QrCodeDisplay from "@/components/QrCodeDisplay";
 import AddItemForm from "@/components/AddItemForm";
+import UploadItemsForm from "@/components/UploadItemsForm";
 import ShoppingList from "@/components/ShoppingList";
 
 interface Props {
@@ -50,6 +51,7 @@ export default async function ListPage({ params }: Props) {
           Artikel hinzufügen
         </h2>
         <AddItemForm listId={id} />
+        <UploadItemsForm listId={id} />
       </div>
 
       <div className="h-px" style={{ backgroundColor: "var(--border-subtle)" }} />

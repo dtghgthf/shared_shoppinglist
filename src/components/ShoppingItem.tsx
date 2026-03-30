@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Item } from "@/lib/types";
 
 interface Props {
@@ -21,6 +22,38 @@ export default function ShoppingItem({
   onDragEnd,
   onDelete,
 }: Props) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(item.text);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  function handleDoubleClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    setEditText(item.text);
+    setIsEditing(true);
+    setTimeout(() => editInputRef.current?.select(), 0);
+  }
+
+  async function handleEditSave() {
+    const trimmed = editText.trim();
+    setIsEditing(false);
+    if (!trimmed || trimmed === item.text) return;
+    await fetch("/api/items", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: item.id, text: trimmed }),
+    });
+  }
+
+  function handleEditKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleEditSave();
+    } else if (e.key === "Escape") {
+      setIsEditing(false);
+      setEditText(item.text);
+    }
+  }
+
   async function handleToggle(e: React.MouseEvent) {
     e.stopPropagation();
     await fetch("/api/items", {
@@ -44,16 +77,16 @@ export default function ShoppingItem({
 
   return (
     <li
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
+      draggable={!isEditing}
+      onDragStart={isEditing ? undefined : onDragStart}
+      onDragOver={isEditing ? undefined : onDragOver}
+      onDrop={isEditing ? undefined : onDrop}
+      onDragEnd={isEditing ? undefined : onDragEnd}
       className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-colors duration-150 select-none"
       style={{
         backgroundColor: isDragging ? "var(--item-drag)" : "transparent",
         opacity: isDragging ? 0.5 : 1,
-        cursor: "grab",
+        cursor: isEditing ? "default" : "grab",
       }}
     >
       {/* Drag handle */}
@@ -89,16 +122,33 @@ export default function ShoppingItem({
         )}
       </button>
 
-      {/* Text */}
-      <span
-        className="flex-1 text-sm transition-colors duration-150"
-        style={{
-          color: item.checked ? "var(--border-strong)" : "var(--text-primary)",
-          textDecoration: item.checked ? "line-through" : "none",
-        }}
-      >
-        {item.text}
-      </span>
+      {/* Text / Edit */}
+      {isEditing ? (
+        <input
+          ref={editInputRef}
+          type="text"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          onBlur={handleEditSave}
+          onKeyDown={handleEditKeyDown}
+          className="flex-1 text-sm bg-transparent border-b outline-none"
+          style={{
+            color: "var(--text-primary)",
+            borderColor: "var(--accent)",
+          }}
+        />
+      ) : (
+        <span
+          onDoubleClick={handleDoubleClick}
+          className="flex-1 text-sm transition-colors duration-150 cursor-text"
+          style={{
+            color: item.checked ? "var(--border-strong)" : "var(--text-primary)",
+            textDecoration: item.checked ? "line-through" : "none",
+          }}
+        >
+          {item.text}
+        </span>
+      )}
 
       {/* Delete — always visible at low opacity, full on hover */}
       <button

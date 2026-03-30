@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { detectCategory, getCategoryById } from "@/lib/categories";
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
 export default function AddItemForm({ listId }: Props) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const detectedCategory = text.trim() ? getCategoryById(detectCategory(text)) : null;
 
@@ -26,6 +27,7 @@ export default function AddItemForm({ listId }: Props) {
         body: JSON.stringify({ list_id: listId, text, category }),
       });
       setText("");
+      inputRef.current?.focus();
     } finally {
       setLoading(false);
     }
@@ -35,6 +37,7 @@ export default function AddItemForm({ listId }: Props) {
     <div className="flex flex-col gap-2">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
+          ref={inputRef}
           type="text"
           value={text}
           onChange={(e) => setText(e.target.value)}
