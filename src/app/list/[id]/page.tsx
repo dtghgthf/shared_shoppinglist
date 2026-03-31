@@ -4,9 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { Item } from "@/lib/types";
 import EditableListName from "@/components/EditableListName";
 import QrCodeDisplay from "@/components/QrCodeDisplay";
-import AddItemForm from "@/components/AddItemForm";
-import UploadItemsForm from "@/components/UploadItemsForm";
-import ShoppingList from "@/components/ShoppingList";
+import ListPageClient from "@/components/ListPageClient";
 import HistoryTracker from "@/components/HistoryTracker";
 
 interface Props {
@@ -48,22 +46,7 @@ export default async function ListPage({ params }: Props) {
         <EditableListName listId={id} initialName={list.name} />
       </div>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--border-strong)" }}>
-          Artikel hinzufügen
-        </h2>
-        <AddItemForm listId={id} />
-        <UploadItemsForm listId={id} />
-      </div>
-
-      <div className="h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
-
-      <div className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--border-strong)" }}>
-          Einkaufsliste
-        </h2>
-        <ShoppingList listId={id} initialItems={(items as Item[]) || []} />
-      </div>
+      <ListPageClient listId={id} initialItems={(items as Item[]) || []} />
 
       <div className="h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
 

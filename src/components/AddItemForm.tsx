@@ -2,12 +2,15 @@
 
 import { useRef, useState } from "react";
 import { detectCategory, getCategoryById } from "@/lib/categories";
+import { Item } from "@/lib/types";
 
 interface Props {
   listId: string;
+  onItemAdding?: (item: Item) => void;
+  onItemAdded?: (tempId: string, realItem: Item) => void;
 }
 
-export default function AddItemForm({ listId }: Props) {
+export default function AddItemForm({ listId, onItemAdding, onItemAdded }: Props) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -19,15 +22,40 @@ export default function AddItemForm({ listId }: Props) {
     if (!text.trim()) return;
 
     const category = detectCategory(text);
+    const trimmedText = text.trim();
+    
+    // Generate temp UUID
+    const tempId = `temp-${crypto.randomUUID()}`;
+    
+    // Create optimistic item
+    const optimisticItem: Item = {
+      id: tempId,
+      list_id: listId,
+      text: trimmedText,
+      checked: false,
+      category,
+      order_index: 0, // Will be calculated by ShoppingList
+      created_at: new Date().toISOString(),
+    };
+
+    // Immediately notify parent to add to UI
+    onItemAdding?.(optimisticItem);
+    
+    setText("");
+    inputRef.current?.focus();
     setLoading(true);
+
     try {
-      await fetch("/api/items", {
+      const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ list_id: listId, text, category }),
+        body: JSON.stringify({ list_id: listId, text: trimmedText, category }),
       });
-      setText("");
-      inputRef.current?.focus();
+      
+      if (res.ok) {
+        const realItem = await res.json();
+        onItemAdded?.(tempId, realItem);
+      }
     } finally {
       setLoading(false);
     }

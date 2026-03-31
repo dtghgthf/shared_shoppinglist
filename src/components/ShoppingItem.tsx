@@ -1,30 +1,47 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { Item } from "@/lib/types";
 
 interface Props {
   item: Item;
   isDragging: boolean;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
+  onToggle: (itemId: string) => void;
+  onEdit: (itemId: string, newText: string) => void;
   onDelete: () => void;
 }
 
 export default function ShoppingItem({
   item,
   isDragging,
-  onDragStart,
-  onDragOver,
-  onDrop,
-  onDragEnd,
+  onToggle,
+  onEdit,
   onDelete,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const editInputRef = useRef<HTMLInputElement>(null);
+
+  const { attributes, listeners, setNodeRef: setDraggableRef, transform } = useDraggable({
+    id: item.id,
+    disabled: isEditing,
+  });
+
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: item.id,
+  });
+
+  // Merge refs
+  const setNodeRef = (node: HTMLElement | null) => {
+    setDraggableRef(node);
+    setDroppableRef(node);
+  };
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+  };
 
   function handleDoubleClick(e: React.MouseEvent) {
     e.stopPropagation();
@@ -33,15 +50,11 @@ export default function ShoppingItem({
     setTimeout(() => editInputRef.current?.select(), 0);
   }
 
-  async function handleEditSave() {
+  function handleEditSave() {
     const trimmed = editText.trim();
     setIsEditing(false);
     if (!trimmed || trimmed === item.text) return;
-    await fetch("/api/items", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: item.id, text: trimmed }),
-    });
+    onEdit(item.id, trimmed);
   }
 
   function handleEditKeyDown(e: React.KeyboardEvent) {
@@ -54,20 +67,16 @@ export default function ShoppingItem({
     }
   }
 
-  async function handleToggle(e: React.MouseEvent) {
+  function handleToggle(e: React.MouseEvent) {
     e.stopPropagation();
-    await fetch("/api/items", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: item.id, checked: !item.checked }),
-    });
+    onToggle(item.id);
   }
 
   async function handleDelete(e: React.MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
-    // Optimistic: remove from parent state immediately
     onDelete();
+    
     await fetch("/api/items", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -77,30 +86,30 @@ export default function ShoppingItem({
 
   return (
     <li
-      draggable={!isEditing}
-      onDragStart={isEditing ? undefined : onDragStart}
-      onDragOver={isEditing ? undefined : onDragOver}
-      onDrop={isEditing ? undefined : onDrop}
-      onDragEnd={isEditing ? undefined : onDragEnd}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-colors duration-150 select-none"
+      ref={setNodeRef}
+      data-item-id={item.id}
       style={{
+        ...style,
         backgroundColor: isDragging ? "var(--item-drag)" : "transparent",
         opacity: isDragging ? 0.5 : 1,
         cursor: isEditing ? "default" : "grab",
       }}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-[4px] transition-colors duration-150 select-none"
     >
       {/* Drag handle */}
       <span
+        {...listeners}
+        {...attributes}
         className="flex-shrink-0 transition-opacity duration-150"
         style={{ color: "var(--border-strong)", opacity: 0.3, cursor: "grab" }}
       >
         <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
-          <circle cx="4" cy="4" r="1.5"/>
-          <circle cx="8" cy="4" r="1.5"/>
-          <circle cx="4" cy="8" r="1.5"/>
-          <circle cx="8" cy="8" r="1.5"/>
-          <circle cx="4" cy="12" r="1.5"/>
-          <circle cx="8" cy="12" r="1.5"/>
+          <circle cx="4" cy="4" r="1.5" />
+          <circle cx="8" cy="4" r="1.5" />
+          <circle cx="4" cy="8" r="1.5" />
+          <circle cx="8" cy="8" r="1.5" />
+          <circle cx="4" cy="12" r="1.5" />
+          <circle cx="8" cy="12" r="1.5" />
         </svg>
       </span>
 

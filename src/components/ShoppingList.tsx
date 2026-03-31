@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { DndContext, DragEndEvent, DragOverEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { supabase } from "@/lib/supabase/client";
 import { Item } from "@/lib/types";
 import { CATEGORIES } from "@/lib/categories";
@@ -11,10 +12,50 @@ interface Props {
   initialItems: Item[];
 }
 
-export default function ShoppingList({ listId, initialItems }: Props) {
+export interface ShoppingListHandle {
+  addOptimisticItem: (item: Item) => void;
+  replaceTemp: (tempId: string, realItem: Item) => void;
+}
+
+interface DropPosition {
+  targetId: string;
+  position: "before" | "after";
+}
+
+const ShoppingList = forwardRef<ShoppingListHandle, Props>(function ShoppingList(
+  { listId, initialItems },
+  ref
+) {
   const [items, setItems] = useState<Item[]>(initialItems);
-  const dragItemId = useRef<string | null>(null);
-  const dragOverItemId = useRef<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<DropPosition | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  // Expose imperative handle for parent
+  useImperativeHandle(ref, () => ({
+    addOptimisticItem: (item: Item) => {
+      setItems((prev) => {
+        const maxOrder = Math.max(...prev.map((i) => i.order_index), 0);
+        return [...prev, { ...item, order_index: maxOrder + 1000 }];
+      });
+    },
+    replaceTemp: (tempId: string, realItem: Item) => {
+      setItems((prev) => {
+        const realAlreadyPresent = prev.some((i) => i.id === realItem.id);
+        if (realAlreadyPresent) {
+          return prev.filter((i) => i.id !== tempId);
+        }
+        return prev.map((i) => (i.id === tempId ? realItem : i));
+      });
+    },
+  }));
 
   useEffect(() => {
     const channel = supabase
@@ -35,8 +76,6 @@ export default function ShoppingList({ listId, initialItems }: Props) {
               )
             );
           } else if (payload.eventType === "DELETE") {
-            // Need REPLICA IDENTITY FULL to get the full row in payload.old.
-            // Run: ALTER TABLE items REPLICA IDENTITY FULL;
             const oldRow = payload.old as Record<string, unknown>;
             const deletedId = oldRow.id as string;
             if (deletedId) {
@@ -47,48 +86,106 @@ export default function ShoppingList({ listId, initialItems }: Props) {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [listId]);
 
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  // Optimistic toggle handler
+  function handleToggle(itemId: string) {
+    const item = items.find((i) => i.id === itemId);
+    if (!item) return;
 
-  function handleDragStart(e: React.DragEvent, itemId: string) {
-    dragItemId.current = itemId;
-    setDraggingId(itemId);
-    e.dataTransfer.effectAllowed = "move";
+    const newChecked = !item.checked;
+    
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, checked: newChecked } : i))
+    );
+
+    fetch("/api/items", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: itemId, checked: newChecked }),
+    });
   }
 
-  function handleDragOver(e: React.DragEvent, itemId: string) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    dragOverItemId.current = itemId;
+  // Optimistic edit handler
+  function handleEdit(itemId: string, newText: string) {
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, text: newText } : i))
+    );
+
+    fetch("/api/items", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: itemId, text: newText }),
+    });
   }
 
-  async function handleDrop(e: React.DragEvent, targetId: string) {
-    e.preventDefault();
-    const sourceId = dragItemId.current;
-    if (!sourceId || sourceId === targetId) return;
+  function handleDelete(itemId: string) {
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      setDropPosition(null);
+      return;
+    }
+
+    const overId = over.id as string;
+    const overElement = document.querySelector(`[data-item-id="${overId}"]`);
+    if (!overElement) return;
+
+    const rect = overElement.getBoundingClientRect();
+    const mouseY = event.activatorEvent instanceof MouseEvent 
+      ? event.activatorEvent.clientY 
+      : (event.activatorEvent as PointerEvent).clientY;
+    
+    const midpoint = rect.top + rect.height / 2;
+    const position = mouseY < midpoint ? "before" : "after";
+
+    setDropPosition({ targetId: overId, position });
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    setDraggingId(null);
+    setDropPosition(null);
+
+    if (!over || active.id === over.id) return;
+
+    const sourceId = active.id as string;
+    const targetId = over.id as string;
 
     const sourceItem = items.find((i) => i.id === sourceId);
     const targetItem = items.find((i) => i.id === targetId);
     if (!sourceItem || !targetItem) return;
 
-    // Items in the same category, sorted by order_index
     const catItems = [...items]
       .filter((i) => i.category === targetItem.category)
       .sort((a, b) => a.order_index - b.order_index);
 
     const targetIdx = catItems.findIndex((i) => i.id === targetId);
-    const prev = catItems[targetIdx - 1];
-    const next = catItems[targetIdx + 1];
+    const position = dropPosition?.position || "after";
 
     let newOrder: number;
-    if (!prev) {
-      newOrder = targetItem.order_index - 500;
-    } else if (!next) {
-      newOrder = targetItem.order_index + 500;
+    if (position === "before") {
+      const prev = catItems[targetIdx - 1];
+      if (!prev) {
+        newOrder = targetItem.order_index - 500;
+      } else {
+        newOrder = (prev.order_index + targetItem.order_index) / 2;
+      }
     } else {
-      newOrder = (prev.order_index + targetItem.order_index) / 2;
+      const next = catItems[targetIdx + 1];
+      if (!next) {
+        newOrder = targetItem.order_index + 500;
+      } else {
+        newOrder = (targetItem.order_index + next.order_index) / 2;
+      }
     }
 
     // Optimistic update
@@ -100,7 +197,7 @@ export default function ShoppingList({ listId, initialItems }: Props) {
       )
     );
 
-    await fetch("/api/items", {
+    fetch("/api/items", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -109,12 +206,6 @@ export default function ShoppingList({ listId, initialItems }: Props) {
         category: targetItem.category,
       }),
     });
-  }
-
-  function handleDragEnd() {
-    dragItemId.current = null;
-    dragOverItemId.current = null;
-    setDraggingId(null);
   }
 
   // Group items by category, preserving CATEGORIES order
@@ -136,52 +227,88 @@ export default function ShoppingList({ listId, initialItems }: Props) {
   const checkedCount = items.filter((i) => i.checked).length;
 
   return (
-    <div className="flex flex-col gap-1">
-      {/* Progress */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs" style={{ color: "var(--border-strong)" }}>
-          {checkedCount} von {items.length} erledigt
-        </span>
-        {checkedCount > 0 && (
-          <div className="h-1 flex-1 mx-4 rounded-full overflow-hidden" style={{ backgroundColor: "var(--border-subtle)" }}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={(e) => setDraggingId(e.active.id as string)}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex flex-col gap-1">
+        {/* Progress */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs" style={{ color: "var(--border-strong)" }}>
+            {checkedCount} von {items.length} erledigt
+          </span>
+          {checkedCount > 0 && (
             <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{ width: `${(checkedCount / items.length) * 100}%`, backgroundColor: "var(--accent)" }}
-            />
-          </div>
-        )}
-      </div>
-
-      {grouped.map(({ category, items: catItems }) => (
-        <div key={category.id} className="mb-4">
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 mb-1 rounded-[4px]"
-            style={{ backgroundColor: "var(--bg-elevated)" }}
-          >
-            <span className="text-base">{category.icon}</span>
-            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--border-strong)" }}>
-              {category.label}
-            </span>
-            <span className="text-xs ml-auto" style={{ color: "var(--border-strong)" }}>
-              {catItems.filter((i) => i.checked).length}/{catItems.length}
-            </span>
-          </div>
-          <ul>
-            {catItems.map((item) => (
-              <ShoppingItem
-                key={item.id}
-                item={item}
-                isDragging={draggingId === item.id}
-                onDragStart={(e) => handleDragStart(e, item.id)}
-                onDragOver={(e) => handleDragOver(e, item.id)}
-                onDrop={(e) => handleDrop(e, item.id)}
-                onDragEnd={handleDragEnd}
-                onDelete={() => setItems((prev) => prev.filter((i) => i.id !== item.id))}
+              className="h-1 flex-1 mx-4 rounded-full overflow-hidden"
+              style={{ backgroundColor: "var(--border-subtle)" }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${(checkedCount / items.length) * 100}%`,
+                  backgroundColor: "var(--accent)",
+                }}
               />
-            ))}
-          </ul>
+            </div>
+          )}
         </div>
-      ))}
-    </div>
+
+        {grouped.map(({ category, items: catItems }) => (
+          <div key={category.id} className="mb-4">
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 mb-1 rounded-[4px]"
+              style={{ backgroundColor: "var(--bg-elevated)" }}
+            >
+              <span className="text-base">{category.icon}</span>
+              <span
+                className="text-xs font-semibold uppercase tracking-wider"
+                style={{ color: "var(--border-strong)" }}
+              >
+                {category.label}
+              </span>
+              <span className="text-xs ml-auto" style={{ color: "var(--border-strong)" }}>
+                {catItems.filter((i) => i.checked).length}/{catItems.length}
+              </span>
+            </div>
+            <ul>
+              {catItems.map((item) => {
+                const showIndicatorBefore =
+                  dropPosition?.targetId === item.id && dropPosition?.position === "before";
+                const showIndicatorAfter =
+                  dropPosition?.targetId === item.id && dropPosition?.position === "after";
+
+                return (
+                  <div key={item.id}>
+                    {showIndicatorBefore && (
+                      <div
+                        className="h-0.5 my-1 rounded-full"
+                        style={{ backgroundColor: "var(--accent)" }}
+                      />
+                    )}
+                    <ShoppingItem
+                      item={item}
+                      isDragging={draggingId === item.id}
+                      onToggle={handleToggle}
+                      onEdit={handleEdit}
+                      onDelete={() => handleDelete(item.id)}
+                    />
+                    {showIndicatorAfter && (
+                      <div
+                        className="h-0.5 my-1 rounded-full"
+                        style={{ backgroundColor: "var(--accent)" }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </DndContext>
   );
-}
+});
+
+export default ShoppingList;
