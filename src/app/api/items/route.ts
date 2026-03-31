@@ -81,7 +81,23 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { id } = await request.json();
+    const { id, list_id, deleteChecked } = await request.json();
+    
+    // Delete all checked items for a list
+    if (deleteChecked && list_id) {
+      const supabase = createServerClient();
+      const { error } = await supabase
+        .from("items")
+        .delete()
+        .eq("list_id", list_id)
+        .eq("checked", true);
+
+      if (error) throw error;
+
+      return NextResponse.json({ success: true });
+    }
+    
+    // Delete single item
     if (!id) {
       return NextResponse.json({ error: "id ist erforderlich" }, { status: 400 });
     }

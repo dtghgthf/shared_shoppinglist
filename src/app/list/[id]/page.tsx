@@ -1,11 +1,10 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createServerClient } from "@/lib/supabase/server";
 import { Item } from "@/lib/types";
 import EditableListName from "@/components/EditableListName";
-import QrCodeDisplay from "@/components/QrCodeDisplay";
 import ListPageClient from "@/components/ListPageClient";
 import HistoryTracker from "@/components/HistoryTracker";
+import ListToolbar from "@/components/ListToolbar";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -35,27 +34,12 @@ export default async function ListPage({ params }: Props) {
     <div>
       <HistoryTracker listId={id} listName={list.name} />
       <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-2">
-        <Link
-          href="/"
-          className="text-xs flex items-center gap-1 transition-opacity hover:opacity-70"
-          style={{ color: "var(--border-strong)" }}
-        >
-          ← Zurück
-        </Link>
-        <EditableListName listId={id} initialName={list.name} />
-      </div>
+        <div className="flex flex-col gap-2">
+          <EditableListName listId={id} initialName={list.name} />
+          <ListToolbar listId={id} listName={list.name} listUrl={listUrl} />
+        </div>
 
-      <ListPageClient listId={id} initialItems={(items as Item[]) || []} />
-
-      <div className="h-px" style={{ backgroundColor: "var(--border-subtle)" }} />
-
-      <div className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--border-strong)" }}>
-          Mit Freunden teilen
-        </h2>
-        <QrCodeDisplay url={listUrl} />
-      </div>
+        <ListPageClient listId={id} initialItems={(items as Item[]) || []} />
       </div>
     </div>
   );
