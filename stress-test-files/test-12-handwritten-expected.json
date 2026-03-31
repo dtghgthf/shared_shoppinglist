@@ -1,0 +1,26 @@
+{
+  "test": "test-12-handwritten",
+  "description": "Handschriftliche OCR-Fehler",
+  "expectedBehavior": "Häufige Tippfehler sollten korrigiert werden können",
+  "expectedResult": {
+    "new": [
+      "Zwiebel"
+    ],
+    "updates": [
+      {"id": "would-be-id-1", "text": "2x Milch"},
+      {"id": "would-be-id-2", "text": "2x Brot"},
+      {"id": "would-be-id-3", "text": "2x Käse"},
+      {"id": "would-be-id-4", "text": "2x Äpfel"},
+      {"id": "would-be-id-5", "text": "2x Bananen"},
+      {"id": "would-be-id-6", "text": "2x Brokkoli"},
+      {"id": "would-be-id-7", "text": "2x Karotten"},
+      {"id": "would-be-id-8", "text": "2x Knoblauch"},
+      {"id": "would-be-id-9", "text": "2x Kartoffeln"},
+      {"id": "would-be-id-10", "text": "2x Tomaten"},
+      {"id": "would-be-id-11", "text": "2x Gurken"},
+      {"id": "would-be-id-12", "text": "2x Feta"}
+    ]
+  },
+  "expectedMessage": "1 neu, 12 zusammengeführt",
+  "notes": "Dies ist ein schwieriges Szenario mit vielen Tippfehlern"
+}

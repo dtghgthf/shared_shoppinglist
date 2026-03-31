@@ -1,0 +1,7 @@
+{
+  "test": "test-9-large-list",
+  "description": "100+ Items - Stress Test",
+  "expectedBehavior": "Alle Items sollten korrekt geparst werden ohne Performance-Probleme",
+  "expectedItemCount": 100,
+  "expectedMessage": "100 Artikel hinzugefügt"
+}

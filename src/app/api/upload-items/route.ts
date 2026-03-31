@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { detectCategory } from "@/lib/categories";
+import { UploadDebugger } from "@/lib/uploadDebugger";
 
 export async function POST(request: Request) {
+  const startTime = Date.now();
+  const debugLog = new UploadDebugger();
+  
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -35,6 +39,7 @@ export async function POST(request: Request) {
     const buffer = await file.arrayBuffer();
     const fileName = file.name.toLowerCase();
     const mimeType = file.type;
+    const fileSize = buffer.byteLength;
 
     let content: Array<{ type: string; [key: string]: any }>;
 
@@ -155,9 +160,6 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
 
     // Extract text response
     const responseText = data.content?.[0]?.text || "";
-    
-    // Debug log
-    console.log("AI Response:", responseText);
 
     // Parse JSON response with new/updates structure
     let result: { new: string[]; updates: Array<{ id: string; text: string }> } = {
@@ -186,6 +188,25 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
     const updates = Array.isArray(result.updates) ? result.updates : [];
 
     if (newItems.length === 0 && updates.length === 0) {
+      // Log debug info
+      await debugLog.logUpload({
+        timestamp: new Date().toISOString(),
+        listId,
+        fileName: file.name,
+        fileType: mimeType,
+        fileSize,
+        existingItems: existingList,
+        aiPrompt: mergeInstructions,
+        aiResponse: responseText,
+        parsedResult: result,
+        finalResult: {
+          newItemsCount: 0,
+          updatesCount: 0,
+          message: "Keine Artikel gefunden",
+        },
+        durationMs: Date.now() - startTime,
+      });
+
       return NextResponse.json(
         { items: [], message: "Keine Artikel gefunden" },
         { status: 200 }
@@ -267,6 +288,25 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
         ? `${updatedCount} Artikel zusammengeführt`
         : `${insertedItems.length} Artikel hinzugefügt`;
 
+    // Log successful upload
+    await debugLog.logUpload({
+      timestamp: new Date().toISOString(),
+      listId,
+      fileName: file.name,
+      fileType: mimeType,
+      fileSize,
+      existingItems: existingList,
+      aiPrompt: mergeInstructions,
+      aiResponse: responseText,
+      parsedResult: result,
+      finalResult: {
+        newItemsCount: insertedItems.length,
+        updatesCount: updatedCount,
+        message: summary,
+      },
+      durationMs: Date.now() - startTime,
+    });
+
     return NextResponse.json(
       { items: insertedItems, message: summary },
       { status: 201 }
@@ -274,6 +314,22 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Upload error:", message);
+    
+    // Log error
+    try {
+      const debugLog2 = new UploadDebugger();
+      await debugLog2.logError(
+        "unknown",
+        err as Error,
+        {
+          timestamp: new Date().toISOString(),
+          durationMs: Date.now() - startTime,
+        }
+      );
+    } catch (logError) {
+      console.error("Failed to log error:", logError);
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

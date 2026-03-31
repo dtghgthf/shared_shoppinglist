@@ -1,0 +1,17 @@
+{
+  "test": "test-8-empty-lines",
+  "description": "Leerzeilen und Whitespace",
+  "expectedBehavior": "Leerzeilen sollten gefiltert werden. Whitespace sollte normalisiert werden.",
+  "expectedResult": {
+    "new": [
+      "Milch",
+      "Brot",
+      "Butter",
+      "Käse",
+      "Äpfel",
+      "Bananen"
+    ],
+    "updates": []
+  },
+  "expectedMessage": "6 Artikel hinzugefügt"
+}

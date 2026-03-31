@@ -1,0 +1,15 @@
+{
+  "test": "test-3-variations",
+  "description": "Produktvariationen (1L Milch, Vollmilch, etc.)",
+  "expectedBehavior": "Alle Milch-Varianten sollten zu 1 Item gemergt werden, alle Käse und Brot Varianten jeweils",
+  "expectedResult": {
+    "new": [],
+    "updates": [
+      {"id": "would-be-id-1", "text": "5x Milch"},
+      {"id": "would-be-id-2", "text": "3x Käse"},
+      {"id": "would-be-id-3", "text": "3x Brot"}
+    ]
+  },
+  "expectedMessage": "3 Artikel zusammengeführt",
+  "notes": "Dies ist ein schwieriges Test-Szenario. Die AI muss intelligente Fuzzy-Matching durchführen."
+}

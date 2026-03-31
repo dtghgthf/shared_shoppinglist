@@ -1,0 +1,19 @@
+{
+  "test": "test-10-fuzzy-matching",
+  "description": "Fuzzy Matching Test - Tippfehler und Variationen",
+  "expectedBehavior": "Trotz verschiedener Schreibweisen sollten Duplikate erkannt werden",
+  "expectedResult": {
+    "new": [],
+    "updates": [
+      {"id": "would-be-id-1", "text": "2x Milch"},
+      {"id": "would-be-id-2", "text": "2x Käse"},
+      {"id": "would-be-id-3", "text": "2x Brot"},
+      {"id": "would-be-id-4", "text": "3x Äpfel"},
+      {"id": "would-be-id-5", "text": "3x Bananen"},
+      {"id": "would-be-id-6", "text": "2x Kartoffeln"},
+      {"id": "would-be-id-7", "text": "2x Zwiebel"}
+    ]
+  },
+  "expectedMessage": "7 Artikel zusammengeführt",
+  "notes": "Dies ist ein SEHR schwieriges Test-Szenario. Fuzzy-Matching mit Tippfehlern ist komplex."
+}

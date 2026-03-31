@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-03-31T13:03:51.964Z",
+  "listId": "avwhpAeVEx",
+  "fileName": "test-3-variations.txt",
+  "fileType": "text/plain",
+  "fileSize": 107,
+  "existingItems": [
+    {
+      "id": "4c449b62-8579-476c-a1bb-5ed988613289",
+      "text": "3x Milch",
+      "checked": false
+    },
+    {
+      "id": "73bcdf6b-457d-478b-8685-029f3a595777",
+      "text": "2x Brot",
+      "checked": false
+    },
+    {
+      "id": "8e4a156d-48bf-4a88-802d-ad08cf6a45d3",
+      "text": "Butter",
+      "checked": false
+    },
+    {
+      "id": "7fdd4ec7-36b2-4c09-ad19-0907fd223fbe",
+      "text": "Eier",
+      "checked": false
+    },
+    {
+      "id": "4decc571-ab24-4a56-9642-af6c0f158062",
+      "text": "4x Käse",
+      "checked": false
+    },
+    {
+      "id": "bd8b2b62-6440-4bf9-8654-921ae7347ffd",
+      "text": "Tomaten",
+      "checked": false
+    },
+    {
+      "id": "f0251db9-3d96-42b9-b71e-d952895c7bb7",
+      "text": "Gurken",
+      "checked": false
+    },
+    {
+      "id": "78015f9a-8c77-4cee-8038-ec54079005ab",
+      "text": "3x Äpfel",
+      "checked": false
+    },
+    {
+      "id": "c819ed91-bf43-4893-ab08-f6ac8f563595",
+      "text": "2x Bananen",
+      "checked": false
+    },
+    {
+      "id": "3c49fcdd-2d25-4a9b-999b-5fb166a40d47",
+      "text": "Kartoffeln",
+      "checked": false
+    }
+  ],
+  "aiPrompt": "\nDu bist ein Shopping-List-Experte. Analysiere die hochgeladene Datei und vergleiche mit der aktuellen Liste.\n\nWICHTIGE MERGE-REGELN:\n1. ERKENNE DUPLIKATE sehr großzügig: \"Milch\" = \"Vollmilch\" = \"1L Milch\" = \"Milch 3,5%\"\n2. ERHÖHE MENGE bei Duplikaten: \"Milch\" + \"Milch\" → \"2x Milch\"\n3. AUCH ABGEHAKTE berücksichtigen: Wenn Duplikat abgehakt ist, erhöhe trotzdem Menge\n4. FORMAT: Immer \"Nx\" Präfix (z.B. \"2x Bananen\", NIE \"Bananen x2\")\n5. STRIP alte Mengen: \"2x Milch\" + \"Milch\" → \"3x Milch\" (nicht \"3x 2x Milch\")\n\nAUSGABE: Striktes JSON-Format:\n{\n  \"new\": [\"Artikel1\", \"Artikel2\"],\n  \"updates\": [\n    {\"id\": \"uuid-hier\", \"text\": \"2x Milch\"},\n    {\"id\": \"uuid-hier\", \"text\": \"3x Käse\"}\n  ]\n}\n\n- \"new\": Nur komplett NEUE Artikel (die nicht mit existierenden matchen)\n- \"updates\": Artikel die mit existierenden zusammengeführt werden (IMMER mit korrekter ID aus aktueller Liste!)\n\nAKTUELLE LISTE:\n- ID:4c449b62-8579-476c-a1bb-5ed988613289 | 3x Milch\n- ID:73bcdf6b-457d-478b-8685-029f3a595777 | 2x Brot\n- ID:8e4a156d-48bf-4a88-802d-ad08cf6a45d3 | Butter\n- ID:7fdd4ec7-36b2-4c09-ad19-0907fd223fbe | Eier\n- ID:4decc571-ab24-4a56-9642-af6c0f158062 | 4x Käse\n- ID:bd8b2b62-6440-4bf9-8654-921ae7347ffd | Tomaten\n- ID:f0251db9-3d96-42b9-b71e-d952895c7bb7 | Gurken\n- ID:78015f9a-8c77-4cee-8038-ec54079005ab | 3x Äpfel\n- ID:c819ed91-bf43-4893-ab08-f6ac8f563595 | 2x Bananen\n- ID:3c49fcdd-2d25-4a9b-999b-5fb166a40d47 | Kartoffeln\n\nNEUE ARTIKEL AUS DATEI (jetzt analysieren!):",
+  "aiResponse": "```json\n{\n  \"new\": [\n    \"H-Milch\",\n    \"Frischmilch\",\n    \"Gouda\",\n    \"Emmentaler Käse\",\n    \"Vollkornbrot\",\n    \"Weißbrot\"\n  ],\n  \"updates\": [\n    {\n      \"id\": \"4c449b62-8579-476c-a1bb-5ed988613289\",\n      \"text\": \"5x Milch\"\n    },\n    {\n      \"id\": \"4decc571-ab24-4a56-9642-af6c0f158062\",\n      \"text\": \"1x Käse\"\n    },\n    {\n      \"id\": \"73bcdf6b-457d-478b-8685-029f3a595777\",\n      \"text\": \"3x Brot\"\n    }\n  ]\n}\n```",
+  "parsedResult": {
+    "new": [
+      "H-Milch",
+      "Frischmilch",
+      "Gouda",
+      "Emmentaler Käse",
+      "Vollkornbrot",
+      "Weißbrot"
+    ],
+    "updates": [
+      {
+        "id": "4c449b62-8579-476c-a1bb-5ed988613289",
+        "text": "5x Milch"
+      },
+      {
+        "id": "4decc571-ab24-4a56-9642-af6c0f158062",
+        "text": "1x Käse"
+      },
+      {
+        "id": "73bcdf6b-457d-478b-8685-029f3a595777",
+        "text": "3x Brot"
+      }
+    ]
+  },
+  "finalResult": {
+    "newItemsCount": 6,
+    "updatesCount": 3,
+    "message": "6 neu, 3 zusammengeführt"
+  },
+  "durationMs": 9448,
+  "_meta": {
+    "loggedAt": "2026-03-31T13:03:51.964Z",
+    "version": "1.0.0"
+  }
+}

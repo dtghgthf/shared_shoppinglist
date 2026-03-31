@@ -1,0 +1,24 @@
+{
+  "test": "test-5-special-chars",
+  "description": "Sonderzeichen, Umlaute, Emojis",
+  "expectedBehavior": "Alle Items sollten korrekt geparst werden. Sonderzeichen sollten entfernt/normalisiert werden",
+  "expectedResult": {
+    "new": [
+      "Äpfel",
+      "Käse",
+      "Brot",
+      "Milch",
+      "Sahne",
+      "Müsli",
+      "Orangensaft",
+      "Tomaten",
+      "Zwiebeln",
+      "Knoblauch",
+      "Petersilie",
+      "Basilikum"
+    ],
+    "updates": []
+  },
+  "expectedMessage": "12 Artikel hinzugefügt",
+  "notes": "Emojis sollten sauber entfernt werden. Klammern und Symbole auch."
+}
