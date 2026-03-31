@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { Item } from "@/lib/types";
 import AddItemForm from "./AddItemForm";
-import UploadItemsForm from "./UploadItemsForm";
 import ShoppingList, { ShoppingListHandle } from "./ShoppingList";
 
 interface Props {
@@ -33,7 +32,6 @@ export default function ListPageClient({ listId, initialItems }: Props) {
           onItemAdding={handleItemAdding}
           onItemAdded={handleItemAdded}
         />
-        <UploadItemsForm listId={listId} />
       </div>
 
       <div className="h-px" style={{ backgroundColor: "var(--border-subtle)" }} />

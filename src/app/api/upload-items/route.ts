@@ -15,12 +15,57 @@ export async function POST(request: Request) {
       );
     }
 
+    // Fetch current list items first (ALL items, including checked ones)
+    const supabase = createServerClient();
+    const { data: currentItems, error: fetchError } = await supabase
+      .from("items")
+      .select("id, text, checked")
+      .eq("list_id", listId)
+      .order("order_index", { ascending: true });
+
+    if (fetchError) throw fetchError;
+
+    const existingList = (currentItems || []).map((item) => ({
+      id: item.id,
+      text: item.text,
+      checked: item.checked,
+    }));
+
     // Read file and prepare for OpenRouter
     const buffer = await file.arrayBuffer();
     const fileName = file.name.toLowerCase();
     const mimeType = file.type;
 
     let content: Array<{ type: string; [key: string]: any }>;
+
+    const existingItemsText =
+      existingList.length > 0
+        ? `\n\nAKTUELLE LISTE:\n${existingList.map((item) => `- ID:${item.id} | ${item.text}${item.checked ? " (✓ abgehakt)" : ""}`).join("\n")}`
+        : "\n\nAKTUELLE LISTE: (leer)";
+
+    const mergeInstructions = `
+Du bist ein Shopping-List-Experte. Analysiere die hochgeladene Datei und vergleiche mit der aktuellen Liste.
+
+WICHTIGE MERGE-REGELN:
+1. ERKENNE DUPLIKATE sehr großzügig: "Milch" = "Vollmilch" = "1L Milch" = "Milch 3,5%"
+2. ERHÖHE MENGE bei Duplikaten: "Milch" + "Milch" → "2x Milch"
+3. AUCH ABGEHAKTE berücksichtigen: Wenn Duplikat abgehakt ist, erhöhe trotzdem Menge
+4. FORMAT: Immer "Nx" Präfix (z.B. "2x Bananen", NIE "Bananen x2")
+5. STRIP alte Mengen: "2x Milch" + "Milch" → "3x Milch" (nicht "3x 2x Milch")
+
+AUSGABE: Striktes JSON-Format:
+{
+  "new": ["Artikel1", "Artikel2"],
+  "updates": [
+    {"id": "uuid-hier", "text": "2x Milch"},
+    {"id": "uuid-hier", "text": "3x Käse"}
+  ]
+}
+
+- "new": Nur komplett NEUE Artikel (die nicht mit existierenden matchen)
+- "updates": Artikel die mit existierenden zusammengeführt werden (IMMER mit korrekter ID aus aktueller Liste!)${existingItemsText}
+
+NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
 
     // Handle different file types
     if (mimeType.startsWith("image/")) {
@@ -41,7 +86,7 @@ export async function POST(request: Request) {
         },
         {
           type: "text",
-          text: 'Analysiere dieses Bild und extrahiere alle Einkaufsartikel oder Zutaten, die darin erwähnt oder sichtbar sind. Antworte NUR mit einem JSON-Array von Strings, z.B. ["Milch", "Äpfel", "Brot"]. Keine Erklärungen, kein Markdown – nur das JSON-Array.',
+          text: mergeInstructions,
         },
       ];
     } else if (
@@ -61,7 +106,7 @@ export async function POST(request: Request) {
         },
         {
           type: "text",
-          text: 'Analysiere dieses PDF und extrahiere alle Einkaufsartikel oder Zutaten. Antworte NUR mit einem JSON-Array von Strings, z.B. ["Milch", "Äpfel", "Brot"]. Keine Erklärungen, kein Markdown – nur das JSON-Array.',
+          text: mergeInstructions,
         },
       ];
     } else {
@@ -71,8 +116,8 @@ export async function POST(request: Request) {
         {
           type: "text",
           text: text
-            ? `Analysiere diesen Text und extrahiere alle Einkaufsartikel oder Zutaten:\n\n${text}\n\nAntworte NUR mit einem JSON-Array von Strings, z.B. ["Milch", "Äpfel", "Brot"]. Keine Erklärungen, kein Markdown – nur das JSON-Array.`
-            : "Antworte mit einem leeren JSON-Array: []",
+            ? `${mergeInstructions}\n\n${text}`
+            : "Antworte mit: {\"new\": [], \"updates\": []}",
         },
       ];
     }
@@ -89,7 +134,7 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [
           {
             role: "user",
@@ -110,27 +155,71 @@ export async function POST(request: Request) {
 
     // Extract text response
     const responseText = data.content?.[0]?.text || "";
+    
+    // Debug log
+    console.log("AI Response:", responseText);
 
-    // Parse JSON array
-    let items: string[] = [];
+    // Parse JSON response with new/updates structure
+    let result: { new: string[]; updates: Array<{ id: string; text: string }> } = {
+      new: [],
+      updates: [],
+    };
+
     try {
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        items = JSON.parse(jsonMatch[0]);
+        result = JSON.parse(jsonMatch[0]);
       }
     } catch {
-      items = [];
+      // Fallback: try old format (simple array)
+      try {
+        const arrayMatch = responseText.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          result.new = JSON.parse(arrayMatch[0]);
+        }
+      } catch {
+        result = { new: [], updates: [] };
+      }
     }
 
-    if (!Array.isArray(items) || items.length === 0) {
+    const newItems = Array.isArray(result.new) ? result.new : [];
+    const updates = Array.isArray(result.updates) ? result.updates : [];
+
+    if (newItems.length === 0 && updates.length === 0) {
       return NextResponse.json(
         { items: [], message: "Keine Artikel gefunden" },
         { status: 200 }
       );
     }
 
-    // Get Supabase client and fetch max order_index
-    const supabase = createServerClient();
+    // Process updates first (merge with existing items)
+    const updatedCount = updates.length;
+    for (const update of updates) {
+      if (update.id && update.text) {
+        // Update text AND uncheck if it was checked
+        await supabase
+          .from("items")
+          .update({ 
+            text: update.text.trim(),
+            checked: false  // Always uncheck when merging
+          })
+          .eq("id", update.id)
+          .eq("list_id", listId);
+      }
+    }
+
+    // Process new items
+    if (newItems.length === 0) {
+      return NextResponse.json(
+        {
+          items: [],
+          message: `${updatedCount} Artikel aktualisiert`,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Get max order_index for new items
     const { data: maxRow } = await supabase
       .from("items")
       .select("order_index")
@@ -142,7 +231,7 @@ export async function POST(request: Request) {
     let baseOrderIndex = (maxRow?.order_index ?? 0) + 1000;
 
     // Build bulk insert array with auto-detected categories
-    const itemsToInsert = items
+    const itemsToInsert = newItems
       .map((text, index) => ({
         list_id: listId,
         text: text.trim(),
@@ -152,22 +241,36 @@ export async function POST(request: Request) {
       }))
       .filter((item) => item.text.length > 0);
 
-    if (itemsToInsert.length === 0) {
+    if (itemsToInsert.length === 0 && updatedCount === 0) {
       return NextResponse.json(
         { items: [], message: "Keine gültigen Artikel gefunden" },
         { status: 200 }
       );
     }
 
-    // Bulk insert
-    const { data: insertedItems, error } = await supabase
-      .from("items")
-      .insert(itemsToInsert)
-      .select();
+    // Bulk insert new items
+    let insertedItems = [];
+    if (itemsToInsert.length > 0) {
+      const { data, error } = await supabase
+        .from("items")
+        .insert(itemsToInsert)
+        .select();
 
-    if (error) throw error;
+      if (error) throw error;
+      insertedItems = data || [];
+    }
 
-    return NextResponse.json({ items: insertedItems || [] }, { status: 201 });
+    const summary =
+      updatedCount > 0 && insertedItems.length > 0
+        ? `${insertedItems.length} neu, ${updatedCount} zusammengeführt`
+        : updatedCount > 0
+        ? `${updatedCount} Artikel zusammengeführt`
+        : `${insertedItems.length} Artikel hinzugefügt`;
+
+    return NextResponse.json(
+      { items: insertedItems, message: summary },
+      { status: 201 }
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("Upload error:", message);

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DarkModeToggle from "@/components/DarkModeToggle";
+import GlobalToolbar from "@/components/GlobalToolbar";
 
 export const metadata: Metadata = {
   title: "Geteilte Einkaufsliste",
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           style={{ backgroundColor: "var(--bg)" }}
         >
           <div className="flex justify-end mb-6">
-            <DarkModeToggle />
+            <GlobalToolbar />
           </div>
           {children}
         </div>
