@@ -143,7 +143,7 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
         messages: [
           {
             role: "user",
-            content: content,
+            content: content + `\n\n[Timestamp: ${new Date().toISOString()}]`,
           },
         ],
       }),
