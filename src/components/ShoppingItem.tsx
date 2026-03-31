@@ -101,7 +101,7 @@ export default function ShoppingItem({
         {...listeners}
         {...attributes}
         className="flex-shrink-0 transition-opacity duration-150"
-        style={{ color: "var(--border-strong)", opacity: 0.3, cursor: "grab" }}
+        style={{ color: "var(--border-strong)", opacity: 0.3, cursor: "grab", touchAction: "none" }}
       >
         <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
           <circle cx="4" cy="4" r="1.5" />

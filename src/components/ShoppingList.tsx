@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-import { DndContext, DragEndEvent, DragOverEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, DragOverEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { supabase } from "@/lib/supabase/client";
 import { Item } from "@/lib/types";
 import { CATEGORIES } from "@/lib/categories";
@@ -31,9 +31,15 @@ const ShoppingList = forwardRef<ShoppingListHandle, Props>(function ShoppingList
   const [dropPosition, setDropPosition] = useState<DropPosition | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     })
   );
