@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-03-31T13:42:56.801Z",
+  "listId": "Zj6bCaVgrV",
+  "fileName": "JPEG-Bild-4476-8701-51-0.jpeg",
+  "fileType": "image/jpeg",
+  "fileSize": 529596,
+  "existingItems": [
+    {
+      "id": "6adbc31a-873e-4954-9198-fee5cd2adafe",
+      "text": "EINKAUF",
+      "checked": false
+    },
+    {
+      "id": "208e46fe-699c-4765-91a1-3b4bb0ee274a",
+      "text": "Zwiebeln",
+      "checked": false
+    },
+    {
+      "id": "9469e63a-9775-41d4-9d0c-95dafda21ded",
+      "text": "Brokkoli (1)",
+      "checked": false
+    },
+    {
+      "id": "8b532515-916c-4cae-974d-6b50ea20a2e3",
+      "text": "Zitrone (1)",
+      "checked": false
+    },
+    {
+      "id": "bce47f6a-e760-426e-83e7-2954661ed016",
+      "text": "Knobi",
+      "checked": false
+    },
+    {
+      "id": "0753eaa2-126a-42cc-95b5-f7d600d08e2d",
+      "text": "Paprika rot (2)",
+      "checked": false
+    },
+    {
+      "id": "a6003070-34b5-474c-ad72-d825bffbeee9",
+      "text": "Thunfisch ohne Öl (1-2)",
+      "checked": false
+    },
+    {
+      "id": "1157a134-db13-464d-88ea-888ddbf64a5f",
+      "text": "Sojasoße",
+      "checked": false
+    },
+    {
+      "id": "221fc47a-89eb-46bc-a3c1-257d8e0cd488",
+      "text": "Erdnussmus ungesüßt",
+      "checked": false
+    },
+    {
+      "id": "9a0de404-da95-4ef9-b3c2-d4fbe114d309",
+      "text": "Schwarze Oliven",
+      "checked": false
+    },
+    {
+      "id": "5775941a-a43f-449c-89a5-a0a2acba0ef5",
+      "text": "Hühnerbrühe",
+      "checked": false
+    },
+    {
+      "id": "deeeff4a-b035-4aa9-8ad7-0f8d76065514",
+      "text": "Parmesankäse",
+      "checked": false
+    },
+    {
+      "id": "09fad897-ecd8-4f70-99c3-df53d5127c69",
+      "text": "Sahne (1 Becher)",
+      "checked": false
+    },
+    {
+      "id": "f4ebc6a0-b5b9-4067-86bc-823315d56b62",
+      "text": "Nudeln",
+      "checked": false
+    },
+    {
+      "id": "6de079ac-a106-48e0-8eb1-5b679b154283",
+      "text": "MISC",
+      "checked": false
+    }
+  ],
+  "aiPrompt": "\nDu bist ein Shopping-List-Experte. Analysiere die hochgeladene Datei und vergleiche mit der aktuellen Liste.\n\nWICHTIGE MERGE-REGELN:\n1. ERKENNE DUPLIKATE sehr großzügig: \"Milch\" = \"Vollmilch\" = \"1L Milch\" = \"Milch 3,5%\"\n2. ERHÖHE MENGE bei Duplikaten: \"Milch\" + \"Milch\" → \"2x Milch\"\n3. AUCH ABGEHAKTE berücksichtigen: Wenn Duplikat abgehakt ist, erhöhe trotzdem Menge\n4. FORMAT: Immer \"Nx\" Präfix (z.B. \"2x Bananen\", NIE \"Bananen x2\")\n5. STRIP alte Mengen: \"2x Milch\" + \"Milch\" → \"3x Milch\" (nicht \"3x 2x Milch\")\n\nAUSGABE: Striktes JSON-Format:\n{\n  \"new\": [\"Artikel1\", \"Artikel2\"],\n  \"updates\": [\n    {\"id\": \"uuid-hier\", \"text\": \"2x Milch\"},\n    {\"id\": \"uuid-hier\", \"text\": \"3x Käse\"}\n  ]\n}\n\n- \"new\": Nur komplett NEUE Artikel (die nicht mit existierenden matchen)\n- \"updates\": Artikel die mit existierenden zusammengeführt werden (IMMER mit korrekter ID aus aktueller Liste!)\n\nAKTUELLE LISTE:\n- ID:6adbc31a-873e-4954-9198-fee5cd2adafe | EINKAUF\n- ID:208e46fe-699c-4765-91a1-3b4bb0ee274a | Zwiebeln\n- ID:9469e63a-9775-41d4-9d0c-95dafda21ded | Brokkoli (1)\n- ID:8b532515-916c-4cae-974d-6b50ea20a2e3 | Zitrone (1)\n- ID:bce47f6a-e760-426e-83e7-2954661ed016 | Knobi\n- ID:0753eaa2-126a-42cc-95b5-f7d600d08e2d | Paprika rot (2)\n- ID:a6003070-34b5-474c-ad72-d825bffbeee9 | Thunfisch ohne Öl (1-2)\n- ID:1157a134-db13-464d-88ea-888ddbf64a5f | Sojasoße\n- ID:221fc47a-89eb-46bc-a3c1-257d8e0cd488 | Erdnussmus ungesüßt\n- ID:9a0de404-da95-4ef9-b3c2-d4fbe114d309 | Schwarze Oliven\n- ID:5775941a-a43f-449c-89a5-a0a2acba0ef5 | Hühnerbrühe\n- ID:deeeff4a-b035-4aa9-8ad7-0f8d76065514 | Parmesankäse\n- ID:09fad897-ecd8-4f70-99c3-df53d5127c69 | Sahne (1 Becher)\n- ID:f4ebc6a0-b5b9-4067-86bc-823315d56b62 | Nudeln\n- ID:6de079ac-a106-48e0-8eb1-5b679b154283 | MISC\n\nNEUE ARTIKEL AUS DATEI (jetzt analysieren!):",
+  "aiResponse": "```json\n{\n  \"new\": [],\n  \"updates\": []\n}\n```",
+  "parsedResult": {
+    "new": [],
+    "updates": []
+  },
+  "finalResult": {
+    "newItemsCount": 0,
+    "updatesCount": 0,
+    "message": "Keine Artikel gefunden"
+  },
+  "durationMs": 4710,
+  "_meta": {
+    "loggedAt": "2026-03-31T13:42:56.802Z",
+    "version": "1.0.0"
+  }
+}

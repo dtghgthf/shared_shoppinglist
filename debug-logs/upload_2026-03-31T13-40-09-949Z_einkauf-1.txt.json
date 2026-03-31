@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-03-31T13:40:09.948Z",
+  "listId": "ZuxiQqVSe6",
+  "fileName": "einkauf-1.txt",
+  "fileType": "text/plain",
+  "fileSize": 46,
+  "existingItems": [
+    {
+      "id": "e0788c58-819d-467c-9fb4-fc50f933bb62",
+      "text": "5x Milch",
+      "checked": false
+    },
+    {
+      "id": "23cf21f6-fe4d-419d-9b19-03b55015850f",
+      "text": "3x Brot",
+      "checked": false
+    },
+    {
+      "id": "b54b171d-8a68-475a-afc0-f91b884dee22",
+      "text": "Butter",
+      "checked": false
+    },
+    {
+      "id": "3c79379b-8368-4c0a-8f83-a0b14de54030",
+      "text": "Eier",
+      "checked": false
+    },
+    {
+      "id": "e223ac89-07a6-4408-b984-8612ecdba63a",
+      "text": "4x Käse",
+      "checked": false
+    },
+    {
+      "id": "47e1c6bd-f666-4061-b121-dc4d40b8f7b0",
+      "text": "Tomaten",
+      "checked": false
+    },
+    {
+      "id": "afc00cda-e6d2-40d4-bc07-2d0539f077c0",
+      "text": "Gurken",
+      "checked": false
+    },
+    {
+      "id": "cd471fa7-830b-4e96-a57a-e04661c2cf8e",
+      "text": "2x Äpfel",
+      "checked": false
+    },
+    {
+      "id": "fd553aaf-63f8-47b2-8923-a4e7abd6b152",
+      "text": "2x Bananen",
+      "checked": false
+    },
+    {
+      "id": "9f464e2a-7115-4eca-baa1-c8b58a63ef4f",
+      "text": "Kartoffeln",
+      "checked": false
+    },
+    {
+      "id": "c4d0c0a2-44fd-4362-bd94-6046e67b3bc4",
+      "text": "H-Milch",
+      "checked": false
+    },
+    {
+      "id": "25e42260-892c-4850-bee2-62504243d3d4",
+      "text": "Frischmilch",
+      "checked": false
+    },
+    {
+      "id": "4b1f8128-c6f8-43b8-8d23-f322bf91771d",
+      "text": "Gouda",
+      "checked": false
+    },
+    {
+      "id": "04764d95-87bd-4ca3-af6d-31f11d1c194b",
+      "text": "Emmentaler Käse",
+      "checked": false
+    },
+    {
+      "id": "d697ce94-8292-4c8f-b336-336907eeaeda",
+      "text": "Vollkornbrot",
+      "checked": false
+    },
+    {
+      "id": "f2c0a2b4-b403-44fe-a6c1-f1106c71fc87",
+      "text": "Weißbrot",
+      "checked": false
+    }
+  ],
+  "aiPrompt": "\nDu bist ein Shopping-List-Experte. Analysiere die hochgeladene Datei und vergleiche mit der aktuellen Liste.\n\nWICHTIGE MERGE-REGELN:\n1. ERKENNE DUPLIKATE sehr großzügig: \"Milch\" = \"Vollmilch\" = \"1L Milch\" = \"Milch 3,5%\"\n2. ERHÖHE MENGE bei Duplikaten: \"Milch\" + \"Milch\" → \"2x Milch\"\n3. AUCH ABGEHAKTE berücksichtigen: Wenn Duplikat abgehakt ist, erhöhe trotzdem Menge\n4. FORMAT: Immer \"Nx\" Präfix (z.B. \"2x Bananen\", NIE \"Bananen x2\")\n5. STRIP alte Mengen: \"2x Milch\" + \"Milch\" → \"3x Milch\" (nicht \"3x 2x Milch\")\n\nAUSGABE: Striktes JSON-Format:\n{\n  \"new\": [\"Artikel1\", \"Artikel2\"],\n  \"updates\": [\n    {\"id\": \"uuid-hier\", \"text\": \"2x Milch\"},\n    {\"id\": \"uuid-hier\", \"text\": \"3x Käse\"}\n  ]\n}\n\n- \"new\": Nur komplett NEUE Artikel (die nicht mit existierenden matchen)\n- \"updates\": Artikel die mit existierenden zusammengeführt werden (IMMER mit korrekter ID aus aktueller Liste!)\n\nAKTUELLE LISTE:\n- ID:e0788c58-819d-467c-9fb4-fc50f933bb62 | 5x Milch\n- ID:23cf21f6-fe4d-419d-9b19-03b55015850f | 3x Brot\n- ID:b54b171d-8a68-475a-afc0-f91b884dee22 | Butter\n- ID:3c79379b-8368-4c0a-8f83-a0b14de54030 | Eier\n- ID:e223ac89-07a6-4408-b984-8612ecdba63a | 4x Käse\n- ID:47e1c6bd-f666-4061-b121-dc4d40b8f7b0 | Tomaten\n- ID:afc00cda-e6d2-40d4-bc07-2d0539f077c0 | Gurken\n- ID:cd471fa7-830b-4e96-a57a-e04661c2cf8e | 2x Äpfel\n- ID:fd553aaf-63f8-47b2-8923-a4e7abd6b152 | 2x Bananen\n- ID:9f464e2a-7115-4eca-baa1-c8b58a63ef4f | Kartoffeln\n- ID:c4d0c0a2-44fd-4362-bd94-6046e67b3bc4 | H-Milch\n- ID:25e42260-892c-4850-bee2-62504243d3d4 | Frischmilch\n- ID:4b1f8128-c6f8-43b8-8d23-f322bf91771d | Gouda\n- ID:04764d95-87bd-4ca3-af6d-31f11d1c194b | Emmentaler Käse\n- ID:d697ce94-8292-4c8f-b336-336907eeaeda | Vollkornbrot\n- ID:f2c0a2b4-b403-44fe-a6c1-f1106c71fc87 | Weißbrot\n\nNEUE ARTIKEL AUS DATEI (jetzt analysieren!):",
+  "aiResponse": "It looks like you provided a JSON object and a number. Let's break down what this might mean:\n\n*   **`[object Object]`**: This is a common representation in JavaScript when you try to `console.log` an object without explicitly converting it to a string. It's essentially a placeholder indicating that there's an object there.\n\n*   **(1774964407797)**: This number looks like a Unix timestamp, which represents the number of milliseconds that have elapsed since the Unix epoch (January 1, 1970, at 00:00:00 Coordinated Universal Time (UTC)).\n\n**What could this combination mean?**\n\nWithout more context, there are a few possibilities:\n\n1.  **Debugging Output:** This could be the result of some debugging output from a program. Perhaps a developer was inspecting an object and alongside it, they logged a timestamp associated with that object or an event related to it.\n\n2.  **Data Structure:** It's possible this is part of a larger data structure or API response. An object might have a property that is a timestamp.\n\n3.  **Timestamp for Object Creation/Modification:** The timestamp could indicate when the `[object Object]` was created, last modified, or when some action related to it occurred.\n\n**To give you a more specific answer, I need more information!**\n\n*   **Where did you see this?** (e.g., in a web browser console, an application log, an API response)\n*   **Is there any surrounding text or code?**\n*   **What were you expecting to see or do?**\n\n**If you can provide any of this context, I can help you understand it better.**",
+  "parsedResult": {
+    "new": [],
+    "updates": []
+  },
+  "finalResult": {
+    "newItemsCount": 0,
+    "updatesCount": 0,
+    "message": "Keine Artikel gefunden"
+  },
+  "durationMs": 2367,
+  "_meta": {
+    "loggedAt": "2026-03-31T13:40:09.949Z",
+    "version": "1.0.0"
+  }
+}

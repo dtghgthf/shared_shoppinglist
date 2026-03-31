@@ -136,6 +136,7 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
         "HTTP-Referer":
           process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
         "X-Title": "Shopping List Upload",
+        "OpenRouter-Cache": "false",  // Disable caching explicitly
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash-lite",
@@ -143,7 +144,7 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
         messages: [
           {
             role: "user",
-            content: content + ` (${Date.now()})`,
+            content: content,
           },
         ],
       }),

@@ -1,0 +1,105 @@
+{
+  "timestamp": "2026-03-31T13:40:19.269Z",
+  "listId": "ZuxiQqVSe6",
+  "fileName": "JPEG-Bild-4476-8701-51-0.jpeg",
+  "fileType": "image/jpeg",
+  "fileSize": 529596,
+  "existingItems": [
+    {
+      "id": "e0788c58-819d-467c-9fb4-fc50f933bb62",
+      "text": "5x Milch",
+      "checked": false
+    },
+    {
+      "id": "23cf21f6-fe4d-419d-9b19-03b55015850f",
+      "text": "3x Brot",
+      "checked": false
+    },
+    {
+      "id": "b54b171d-8a68-475a-afc0-f91b884dee22",
+      "text": "Butter",
+      "checked": false
+    },
+    {
+      "id": "3c79379b-8368-4c0a-8f83-a0b14de54030",
+      "text": "Eier",
+      "checked": false
+    },
+    {
+      "id": "e223ac89-07a6-4408-b984-8612ecdba63a",
+      "text": "4x Käse",
+      "checked": false
+    },
+    {
+      "id": "47e1c6bd-f666-4061-b121-dc4d40b8f7b0",
+      "text": "Tomaten",
+      "checked": false
+    },
+    {
+      "id": "afc00cda-e6d2-40d4-bc07-2d0539f077c0",
+      "text": "Gurken",
+      "checked": false
+    },
+    {
+      "id": "cd471fa7-830b-4e96-a57a-e04661c2cf8e",
+      "text": "2x Äpfel",
+      "checked": false
+    },
+    {
+      "id": "fd553aaf-63f8-47b2-8923-a4e7abd6b152",
+      "text": "2x Bananen",
+      "checked": false
+    },
+    {
+      "id": "9f464e2a-7115-4eca-baa1-c8b58a63ef4f",
+      "text": "Kartoffeln",
+      "checked": false
+    },
+    {
+      "id": "c4d0c0a2-44fd-4362-bd94-6046e67b3bc4",
+      "text": "H-Milch",
+      "checked": false
+    },
+    {
+      "id": "25e42260-892c-4850-bee2-62504243d3d4",
+      "text": "Frischmilch",
+      "checked": false
+    },
+    {
+      "id": "4b1f8128-c6f8-43b8-8d23-f322bf91771d",
+      "text": "Gouda",
+      "checked": false
+    },
+    {
+      "id": "04764d95-87bd-4ca3-af6d-31f11d1c194b",
+      "text": "Emmentaler Käse",
+      "checked": false
+    },
+    {
+      "id": "d697ce94-8292-4c8f-b336-336907eeaeda",
+      "text": "Vollkornbrot",
+      "checked": false
+    },
+    {
+      "id": "f2c0a2b4-b403-44fe-a6c1-f1106c71fc87",
+      "text": "Weißbrot",
+      "checked": false
+    }
+  ],
+  "aiPrompt": "\nDu bist ein Shopping-List-Experte. Analysiere die hochgeladene Datei und vergleiche mit der aktuellen Liste.\n\nWICHTIGE MERGE-REGELN:\n1. ERKENNE DUPLIKATE sehr großzügig: \"Milch\" = \"Vollmilch\" = \"1L Milch\" = \"Milch 3,5%\"\n2. ERHÖHE MENGE bei Duplikaten: \"Milch\" + \"Milch\" → \"2x Milch\"\n3. AUCH ABGEHAKTE berücksichtigen: Wenn Duplikat abgehakt ist, erhöhe trotzdem Menge\n4. FORMAT: Immer \"Nx\" Präfix (z.B. \"2x Bananen\", NIE \"Bananen x2\")\n5. STRIP alte Mengen: \"2x Milch\" + \"Milch\" → \"3x Milch\" (nicht \"3x 2x Milch\")\n\nAUSGABE: Striktes JSON-Format:\n{\n  \"new\": [\"Artikel1\", \"Artikel2\"],\n  \"updates\": [\n    {\"id\": \"uuid-hier\", \"text\": \"2x Milch\"},\n    {\"id\": \"uuid-hier\", \"text\": \"3x Käse\"}\n  ]\n}\n\n- \"new\": Nur komplett NEUE Artikel (die nicht mit existierenden matchen)\n- \"updates\": Artikel die mit existierenden zusammengeführt werden (IMMER mit korrekter ID aus aktueller Liste!)\n\nAKTUELLE LISTE:\n- ID:e0788c58-819d-467c-9fb4-fc50f933bb62 | 5x Milch\n- ID:23cf21f6-fe4d-419d-9b19-03b55015850f | 3x Brot\n- ID:b54b171d-8a68-475a-afc0-f91b884dee22 | Butter\n- ID:3c79379b-8368-4c0a-8f83-a0b14de54030 | Eier\n- ID:e223ac89-07a6-4408-b984-8612ecdba63a | 4x Käse\n- ID:47e1c6bd-f666-4061-b121-dc4d40b8f7b0 | Tomaten\n- ID:afc00cda-e6d2-40d4-bc07-2d0539f077c0 | Gurken\n- ID:cd471fa7-830b-4e96-a57a-e04661c2cf8e | 2x Äpfel\n- ID:fd553aaf-63f8-47b2-8923-a4e7abd6b152 | 2x Bananen\n- ID:9f464e2a-7115-4eca-baa1-c8b58a63ef4f | Kartoffeln\n- ID:c4d0c0a2-44fd-4362-bd94-6046e67b3bc4 | H-Milch\n- ID:25e42260-892c-4850-bee2-62504243d3d4 | Frischmilch\n- ID:4b1f8128-c6f8-43b8-8d23-f322bf91771d | Gouda\n- ID:04764d95-87bd-4ca3-af6d-31f11d1c194b | Emmentaler Käse\n- ID:d697ce94-8292-4c8f-b336-336907eeaeda | Vollkornbrot\n- ID:f2c0a2b4-b403-44fe-a6c1-f1106c71fc87 | Weißbrot\n\nNEUE ARTIKEL AUS DATEI (jetzt analysieren!):",
+  "aiResponse": "It looks like you've provided a string that contains what appear to be JavaScript object representations. \n\nHere's a breakdown of what you've given and what it likely means:\n\n*   **`[object Object]`**: This is the default string representation of a plain JavaScript object. When you try to convert an object to a string without a specific method for doing so (like `toString()`), JavaScript often defaults to `\"[object Object]\"`. This is usually not very informative because it doesn't tell you the contents of the object.\n\n*   **`(1774964414288)`**: This looks like a number. In the context of JavaScript objects, this could represent:\n    *   A **timestamp**: A large number like this is often a Unix timestamp (number of milliseconds since the Unix epoch, January 1, 1970, 00:00:00 UTC).\n    *   An **ID**: It could be a unique identifier for an object or a record in a system.\n    *   A large numerical value: Simply a large number being stored or associated with the object.\n\n**What does this mean together?**\n\nYou've likely encountered this output in a situation where:\n\n1.  **You're trying to log or display objects:** For example, in a browser's developer console or in a Node.js application, if you `console.log(myObject)` and `myObject` is a complex object, you might see `[object Object]` in some contexts, or if you're trying to stringify it directly.\n2.  **An object has a numerical property:** One of the `[object Object]`s might have a property with the value `1774964414288`.\n\n**How to get more information:**\n\nTo understand what these objects actually *contain*, you would typically:\n\n*   **Use `console.log()` with the objects directly:** In a browser's developer console, this will usually show you an expandable representation of the object and its properties.\n*   **Use `JSON.stringify()`:** If the objects are JSON-serializable, `JSON.stringify(myObject)` will convert the object into a string representation of its data. This is very useful for inspecting the contents.\n*   **Inspect in a debugger:** Use your browser's developer tools or a debugger in your IDE to step through your code and inspect the object's properties at runtime.\n\n**Example:**\n\nLet's say you have some JavaScript code like this:\n\n```javascript\nconst user = {\n  name: \"Alice\",\n  id: 1774964414288\n};\n\nconst settings = {\n  theme: \"dark\",\n  options: {\n    fontSize: 14\n  }\n};\n\nconsole.log(user);\nconsole.log(settings);\nconsole.log(String(user)); // This might result in \"[object Object]\"\nconsole.log(JSON.stringify(user)); // This will show you {\"name\":\"Alice\",\"id\":1774964414288}\n```\n\nIf you saw `[object Object], [object Object] (1774964414288)`, it's possible that:\n\n*   You logged two objects, and one of them has a property related to the number.\n*   Or, the number `1774964414288` is itself an object or part of a larger structure that's being stringified.\n\n**In summary:** `[object Object]` means you're seeing the default string representation of an object, and `(1774964414288)` is likely a large numerical value associated with it. To understand the actual data, you need to inspect the objects in a more detailed way.",
+  "parsedResult": {
+    "new": [],
+    "updates": []
+  },
+  "finalResult": {
+    "newItemsCount": 0,
+    "updatesCount": 0,
+    "message": "Keine Artikel gefunden"
+  },
+  "durationMs": 5158,
+  "_meta": {
+    "loggedAt": "2026-03-31T13:40:19.270Z",
+    "version": "1.0.0"
+  }
+}
