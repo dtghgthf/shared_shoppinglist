@@ -1,16 +1,25 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { generateListId } from "@/lib/utils";
+import { canViewList, isListOwner, getCurrentUserId } from "@/lib/auth/check-access";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  const supabase = createServerClient();
+  const userId = await getCurrentUserId();
+
+  // Check view access
+  const hasAccess = await canViewList(userId, id);
+  if (!hasAccess) {
+    return NextResponse.json({ error: "Kein Zugriff auf diese Liste" }, { status: 403 });
+  }
+
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("lists")
-    .select("name")
+    .select("name, owner_id, visibility")
     .eq("id", id)
     .single();
 
@@ -23,7 +32,15 @@ export async function PATCH(request: Request) {
     const { id, name } = await request.json();
     if (!id || !name) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-    const supabase = createServerClient();
+    const userId = await getCurrentUserId();
+
+    // Only owner can rename list
+    const isOwner = await isListOwner(userId, id);
+    if (!isOwner) {
+      return NextResponse.json({ error: "Nur der Besitzer kann die Liste umbenennen" }, { status: 403 });
+    }
+
+    const supabase = await createServerClient();
     const { data, error } = await supabase
       .from("lists")
       .update({ name })
@@ -45,7 +62,15 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-    const supabase = createServerClient();
+    const userId = await getCurrentUserId();
+
+    // Only owner can delete list
+    const isOwner = await isListOwner(userId, id);
+    if (!isOwner) {
+      return NextResponse.json({ error: "Nur der Besitzer kann die Liste löschen" }, { status: 403 });
+    }
+
+    const supabase = await createServerClient();
     const { error } = await supabase
       .from("lists")
       .delete()
@@ -61,34 +86,54 @@ export async function DELETE(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const userId = await getCurrentUserId();
+    console.log("[POST /api/lists] userId:", userId);
+    
     const date = new Date();
     const dateStr = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
 
     // Count lists created today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     const { count, error: countError } = await supabase
       .from("lists")
       .select("*", { count: "exact", head: true })
       .gte("created_at", today.toISOString());
 
+    if (countError) {
+      console.error("[POST /api/lists] Count error:", countError);
+    }
+
     const index = (count || 0) + 1;
     const name = `Einkaufsliste vom ${dateStr} (Nr. ${index})`;
     const id = generateListId();
 
+    console.log("[POST /api/lists] Creating list:", { id, name, owner_id: userId, visibility: userId ? "private" : "link_write" });
+
+    // Set owner_id if user is logged in, otherwise create unclaimed list
     const { data, error } = await supabase
       .from("lists")
-      .insert({ id, name })
+      .insert({ 
+        id, 
+        name,
+        owner_id: userId,
+        visibility: userId ? "private" : "link_write" // Unclaimed lists are writable by anyone
+      })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("[POST /api/lists] Insert error:", error);
+      throw error;
+    }
 
+    console.log("[POST /api/lists] Success:", data);
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[POST /api/lists] Exception:", err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

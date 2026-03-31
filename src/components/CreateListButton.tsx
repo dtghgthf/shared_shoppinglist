@@ -16,9 +16,6 @@ export default function CreateListButton() {
       });
       const data = await res.json();
       if (data.id) {
-        const history: { id: string; name: string; isOwner: boolean }[] = JSON.parse(localStorage.getItem("shopping_list_history") || "[]");
-        history.push({ id: data.id, name: data.name, isOwner: true });
-        localStorage.setItem("shopping_list_history", JSON.stringify(history));
         router.push(`/list/${data.id}`);
       }
     } finally {

@@ -9,7 +9,7 @@ interface List {
 }
 
 export default async function AdminPage() {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Fetch all lists with item count
   const { data: lists, error } = await supabase

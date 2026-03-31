@@ -1,6 +1,6 @@
 import CreateListButton from "@/components/CreateListButton";
 import QrCodeScanner from "@/components/QrCodeScanner";
-import ListHistory from "@/components/ListHistory";
+import MyLists from "@/components/MyLists";
 
 export default function HomePage() {
   return (
@@ -21,7 +21,7 @@ export default function HomePage() {
           Neue Liste
         </h2>
         <CreateListButton />
-        <ListHistory />
+        <MyLists />
       </div>
 
       <div className="flex items-center gap-4">

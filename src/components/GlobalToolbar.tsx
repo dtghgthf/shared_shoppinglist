@@ -8,6 +8,9 @@ interface ListData {
   listId: string;
   listName: string;
   listUrl: string;
+  currentUserId?: string | null;
+  isOwner?: boolean;
+  isUnclaimed?: boolean;
 }
 
 function applyTheme(dark: boolean) {
@@ -187,9 +190,13 @@ export default function GlobalToolbar() {
       {listData && (
         <ShareModal
           url={listData.listUrl}
+          listId={listData.listId}
           listName={listData.listName}
           isOpen={isShareModalOpen}
           onClose={() => setIsShareModalOpen(false)}
+          currentUserId={listData.currentUserId}
+          isOwner={listData.isOwner}
+          isUnclaimed={listData.isUnclaimed}
         />
       )}
     </>

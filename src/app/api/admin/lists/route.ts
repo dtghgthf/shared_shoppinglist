@@ -3,7 +3,7 @@ import { createServerClient } from "@/lib/supabase/server";
 
 export async function GET() {
   try {
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     // Fetch all lists with item count
     const { data: lists, error: listsError } = await supabase
@@ -44,7 +44,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "id ist erforderlich" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
 
     // Delete list (CASCADE will delete all items)
     const { error } = await supabase.from("lists").delete().eq("id", id);

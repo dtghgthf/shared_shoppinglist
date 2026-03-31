@@ -2,19 +2,45 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
+import { QrCode, Settings } from "lucide-react";
+import ListAccessSettings from "./ListAccessSettings";
+import ClaimListButton from "./ClaimListButton";
 
 interface Props {
   url: string;
+  listId: string;
   listName: string;
   isOpen: boolean;
   onClose: () => void;
+  currentUserId?: string | null;
+  isOwner?: boolean;
+  isUnclaimed?: boolean;
 }
 
-export default function ShareModal({ url, listName, isOpen, onClose }: Props) {
+type Tab = "share" | "settings";
+
+export default function ShareModal({
+  url,
+  listId,
+  listName,
+  isOpen,
+  onClose,
+  currentUserId = null,
+  isOwner = false,
+  isUnclaimed = false,
+}: Props) {
   const [dataUrl, setDataUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [canShare, setCanShare] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("share");
+
+  // Show settings tab by default for owners, share tab for others
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(isOwner ? "settings" : "share");
+    }
+  }, [isOpen, isOwner]);
 
   useEffect(() => {
     setCanShare(typeof navigator !== "undefined" && "share" in navigator);
@@ -75,6 +101,8 @@ export default function ShareModal({ url, listName, isOpen, onClose }: Props) {
 
   if (!isOpen) return null;
 
+  const showTabs = currentUserId && (isOwner || !isUnclaimed);
+
   return (
     <>
       {/* Backdrop */}
@@ -86,12 +114,12 @@ export default function ShareModal({ url, listName, isOpen, onClose }: Props) {
 
       {/* Modal - Bottom sheet on mobile, center on desktop */}
       <div
-        className="fixed z-50 left-0 right-0 bottom-0 md:left-1/2 md:right-auto md:bottom-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md rounded-t-[12px] md:rounded-[12px] shadow-2xl transition-transform duration-200"
+        className="fixed z-50 left-0 right-0 bottom-0 md:left-1/2 md:right-auto md:bottom-auto md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-md rounded-t-[12px] md:rounded-[12px] shadow-2xl transition-transform duration-200 max-h-[90vh] flex flex-col"
         style={{ backgroundColor: "var(--bg-elevated)" }}
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-5 py-4 border-b"
+          className="flex items-center justify-between px-5 py-4 border-b flex-shrink-0"
           style={{ borderColor: "var(--border-subtle)" }}
         >
           <h3 className="text-lg font-semibold heading" style={{ color: "var(--text-primary)" }}>
@@ -110,61 +138,112 @@ export default function ShareModal({ url, listName, isOpen, onClose }: Props) {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex flex-col items-center gap-4 p-6">
-          <p className="text-sm text-center" style={{ color: "var(--text-secondary)" }}>
-            QR-Code scannen oder Link teilen
-          </p>
+        {/* Tabs */}
+        {showTabs && (
+          <div
+            className="flex border-b flex-shrink-0"
+            style={{ borderColor: "var(--border-subtle)" }}
+          >
+            <button
+              onClick={() => setActiveTab("share")}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+              style={{
+                color: activeTab === "share" ? "var(--accent)" : "var(--text-secondary)",
+                borderBottom: activeTab === "share" ? "2px solid var(--accent)" : "2px solid transparent",
+              }}
+            >
+              <QrCode size={16} />
+              QR-Code
+            </button>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
+              style={{
+                color: activeTab === "settings" ? "var(--accent)" : "var(--text-secondary)",
+                borderBottom: activeTab === "settings" ? "2px solid var(--accent)" : "2px solid transparent",
+              }}
+            >
+              <Settings size={16} />
+              Einstellungen
+            </button>
+          </div>
+        )}
 
-          {/* QR Code */}
-          {dataUrl ? (
-            <div
-              className="p-4 rounded-[8px]"
-              style={{ backgroundColor: "var(--bg)" }}
-            >
-              <img src={dataUrl} alt="QR-Code" width={240} height={240} />
-            </div>
-          ) : (
-            <div
-              className="w-[240px] h-[240px] flex items-center justify-center rounded-[8px]"
-              style={{ backgroundColor: "var(--border-subtle)" }}
-            >
-              <span className="text-sm" style={{ color: "var(--border-strong)" }}>Wird generiert…</span>
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          {activeTab === "share" && (
+            <div className="flex flex-col items-center gap-4 p-6">
+              <p className="text-sm text-center" style={{ color: "var(--text-secondary)" }}>
+                QR-Code scannen oder Link teilen
+              </p>
+
+              {/* QR Code */}
+              {dataUrl ? (
+                <div
+                  className="p-4 rounded-[8px]"
+                  style={{ backgroundColor: "var(--bg)" }}
+                >
+                  <img src={dataUrl} alt="QR-Code" width={240} height={240} />
+                </div>
+              ) : (
+                <div
+                  className="w-[240px] h-[240px] flex items-center justify-center rounded-[8px]"
+                  style={{ backgroundColor: "var(--border-subtle)" }}
+                >
+                  <span className="text-sm" style={{ color: "var(--border-strong)" }}>Wird generiert…</span>
+                </div>
+              )}
+
+              {/* URL */}
+              <p className="text-xs break-all text-center px-3 py-2 rounded-[4px] max-w-full" style={{ color: "var(--border-strong)", backgroundColor: "var(--bg)" }}>
+                {url}
+              </p>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <button
+                  onClick={handleCopy}
+                  className="flex-1 text-sm px-4 py-2.5 rounded-[4px] border transition-all duration-150 font-medium"
+                  style={{
+                    borderColor: copied ? "var(--accent)" : "var(--border-subtle)",
+                    color: copied ? "var(--accent)" : "var(--text-primary)",
+                    backgroundColor: "var(--bg)",
+                  }}
+                >
+                  {copied ? "✓ Kopiert!" : "Link kopieren"}
+                </button>
+
+                {canShare && (
+                  <button
+                    onClick={handleSystemShare}
+                    className="flex-1 text-sm px-4 py-2.5 rounded-[4px] transition-all duration-150 font-medium"
+                    style={{
+                      backgroundColor: "var(--accent)",
+                      color: "white",
+                    }}
+                  >
+                    Teilen
+                  </button>
+                )}
+              </div>
+
+              {/* Claim button for unclaimed lists */}
+              {isUnclaimed && currentUserId && (
+                <div className="w-full mt-2">
+                  <ClaimListButton listId={listId} />
+                </div>
+              )}
             </div>
           )}
 
-          {/* URL */}
-          <p className="text-xs break-all text-center px-3 py-2 rounded-[4px] max-w-full" style={{ color: "var(--border-strong)", backgroundColor: "var(--bg)" }}>
-            {url}
-          </p>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 w-full">
-            <button
-              onClick={handleCopy}
-              className="flex-1 text-sm px-4 py-2.5 rounded-[4px] border transition-all duration-150 font-medium"
-              style={{
-                borderColor: copied ? "var(--accent)" : "var(--border-subtle)",
-                color: copied ? "var(--accent)" : "var(--text-primary)",
-                backgroundColor: "var(--bg)",
-              }}
-            >
-              {copied ? "✓ Kopiert!" : "Link kopieren"}
-            </button>
-
-            {canShare && (
-              <button
-                onClick={handleSystemShare}
-                className="flex-1 text-sm px-4 py-2.5 rounded-[4px] transition-all duration-150 font-medium"
-                style={{
-                  backgroundColor: "var(--accent)",
-                  color: "white",
-                }}
-              >
-                Teilen
-              </button>
-            )}
-          </div>
+          {activeTab === "settings" && (
+            <div className="p-6">
+              <ListAccessSettings
+                listId={listId}
+                currentUserId={currentUserId}
+              />
+            </div>
+          )}
         </div>
       </div>
     </>

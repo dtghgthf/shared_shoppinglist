@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import GlobalToolbar from "@/components/GlobalToolbar";
+import HeaderToolbar from "@/components/HeaderToolbar";
+import MigrateLocalStorage from "@/components/MigrateLocalStorage";
 
 export const metadata: Metadata = {
   title: "Geteilte Einkaufsliste",
@@ -19,12 +20,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning>
+        <MigrateLocalStorage />
         <div
           className="max-w-2xl mx-auto px-6 py-10 min-h-screen"
           style={{ backgroundColor: "var(--bg)" }}
         >
           <div className="flex justify-end mb-6">
-            <GlobalToolbar />
+            <HeaderToolbar />
           </div>
           {children}
         </div>

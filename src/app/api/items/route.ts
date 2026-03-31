@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
+import { canEditList, getCurrentUserId } from "@/lib/auth/check-access";
 
 export async function POST(request: Request) {
   try {
@@ -8,7 +9,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "list_id and text sind erforderlich" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    const userId = await getCurrentUserId();
+
+    // Check edit access
+    const hasAccess = await canEditList(userId, list_id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Keine Berechtigung zum Bearbeiten dieser Liste" }, { status: 403 });
+    }
+
+    const supabase = await createServerClient();
 
     // Get current max order_index for this list
     const { data: maxRow } = await supabase
@@ -51,6 +60,26 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "id ist erforderlich" }, { status: 400 });
     }
 
+    const userId = await getCurrentUserId();
+    const supabase = await createServerClient();
+
+    // Get item to find its list_id
+    const { data: item, error: itemError } = await supabase
+      .from("items")
+      .select("list_id")
+      .eq("id", id)
+      .single();
+
+    if (itemError || !item) {
+      return NextResponse.json({ error: "Artikel nicht gefunden" }, { status: 404 });
+    }
+
+    // Check edit access
+    const hasAccess = await canEditList(userId, item.list_id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Keine Berechtigung zum Bearbeiten dieser Liste" }, { status: 403 });
+    }
+
     // Allow updating: checked, order_index, category, text
     const allowed = ["checked", "order_index", "category", "text"];
     const patch: Record<string, unknown> = {};
@@ -62,7 +91,6 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Keine gültigen Felder zum Aktualisieren" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
     const { data, error } = await supabase
       .from("items")
       .update(patch)
@@ -83,9 +111,17 @@ export async function DELETE(request: Request) {
   try {
     const { id, list_id, deleteChecked } = await request.json();
     
+    const userId = await getCurrentUserId();
+    const supabase = await createServerClient();
+
     // Delete all checked items for a list
     if (deleteChecked && list_id) {
-      const supabase = createServerClient();
+      // Check edit access
+      const hasAccess = await canEditList(userId, list_id);
+      if (!hasAccess) {
+        return NextResponse.json({ error: "Keine Berechtigung zum Bearbeiten dieser Liste" }, { status: 403 });
+      }
+
       const { error } = await supabase
         .from("items")
         .delete()
@@ -102,7 +138,23 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "id ist erforderlich" }, { status: 400 });
     }
 
-    const supabase = createServerClient();
+    // Get item to find its list_id
+    const { data: item, error: itemError } = await supabase
+      .from("items")
+      .select("list_id")
+      .eq("id", id)
+      .single();
+
+    if (itemError || !item) {
+      return NextResponse.json({ error: "Artikel nicht gefunden" }, { status: 404 });
+    }
+
+    // Check edit access
+    const hasAccess = await canEditList(userId, item.list_id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: "Keine Berechtigung zum Bearbeiten dieser Liste" }, { status: 403 });
+    }
+
     const { error } = await supabase.from("items").delete().eq("id", id);
 
     if (error) throw error;

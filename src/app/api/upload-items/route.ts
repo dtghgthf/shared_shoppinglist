@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { detectCategory } from "@/lib/categories";
 import { UploadDebugger } from "@/lib/uploadDebugger";
+import { canEditList, getCurrentUserId } from "@/lib/auth/check-access";
 
 export async function POST(request: Request) {
   const startTime = Date.now();
@@ -19,8 +20,19 @@ export async function POST(request: Request) {
       );
     }
 
+    const userId = await getCurrentUserId();
+
+    // Check edit access
+    const hasAccess = await canEditList(userId, listId);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "Keine Berechtigung zum Bearbeiten dieser Liste" },
+        { status: 403 }
+      );
+    }
+
     // Fetch current list items first (ALL items, including checked ones)
-    const supabase = createServerClient();
+    const supabase = await createServerClient();
     const { data: currentItems, error: fetchError } = await supabase
       .from("items")
       .select("id, text, checked")
@@ -250,7 +262,7 @@ NEUE ARTIKEL AUS DATEI (jetzt analysieren!):`;
       .limit(1)
       .maybeSingle();
 
-    let baseOrderIndex = (maxRow?.order_index ?? 0) + 1000;
+    const baseOrderIndex = (maxRow?.order_index ?? 0) + 1000;
 
     // Build bulk insert array with auto-detected categories
     const itemsToInsert = newItems

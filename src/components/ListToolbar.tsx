@@ -87,6 +87,7 @@ export default function ListToolbar({ listId, listName, listUrl }: Props) {
 
       <ShareModal
         url={listUrl}
+        listId={listId}
         listName={listName}
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}

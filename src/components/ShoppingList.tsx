@@ -7,9 +7,32 @@ import { Item } from "@/lib/types";
 import { CATEGORIES } from "@/lib/categories";
 import ShoppingItem from "./ShoppingItem";
 
+/**
+ * ShoppingList Component with Realtime Sync and RLS
+ * 
+ * Realtime Subscriptions with Row Level Security (RLS):
+ * - This component subscribes to changes on the items table using Supabase Realtime
+ * - The subscription automatically respects RLS policies when using an authenticated client
+ * - The filter `list_id=eq.${listId}` combined with RLS ensures users only see items they can access
+ * 
+ * How RLS works with Realtime:
+ * 1. The browser client uses the authenticated session (JWT token from cookies)
+ * 2. When an event occurs on the database, Supabase checks the RLS policies
+ * 3. The policies evaluate using the user's auth.uid() from the JWT
+ * 4. Only rows that pass the RLS policy check are sent to the subscription
+ * 5. The subscription filter (list_id) is applied as an additional filter
+ * 
+ * Security implications:
+ * - Even if a user tries to subscribe to a list_id they don't have access to,
+ *   they won't receive any events because RLS policies will block access
+ * - Deletes are included (REPLICA IDENTITY FULL) so users see when items are removed
+ * - The subscription is entirely driven by RLS, no additional permission checks needed here
+ */
+
 interface Props {
   listId: string;
   initialItems: Item[];
+  canEdit?: boolean;
 }
 
 export interface ShoppingListHandle {
@@ -23,7 +46,7 @@ interface DropPosition {
 }
 
 const ShoppingList = forwardRef<ShoppingListHandle, Props>(function ShoppingList(
-  { listId, initialItems },
+  { listId, initialItems, canEdit = true },
   ref
 ) {
   const [items, setItems] = useState<Item[]>(initialItems);
@@ -64,12 +87,18 @@ const ShoppingList = forwardRef<ShoppingListHandle, Props>(function ShoppingList
   }));
 
   useEffect(() => {
+    // Subscribe to realtime changes with RLS
+    // The subscription uses the authenticated client which automatically applies RLS policies
+    // Users will only receive events for items they can access based on their list permissions
     const channel = supabase
       .channel(`items:${listId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "items", filter: `list_id=eq.${listId}` },
         (payload) => {
+          // RLS ensures we only receive events for items the current user can access
+          // Even if we received an event for an inaccessible list, it would already be filtered by RLS
+          
           if (payload.eventType === "INSERT") {
             setItems((prev) => {
               if (prev.some((i) => i.id === (payload.new as Item).id)) return prev;
@@ -82,6 +111,7 @@ const ShoppingList = forwardRef<ShoppingListHandle, Props>(function ShoppingList
               )
             );
           } else if (payload.eventType === "DELETE") {
+            // REPLICA IDENTITY FULL (set in migration) ensures DELETE events work properly
             const oldRow = payload.old as Record<string, unknown>;
             const deletedId = oldRow.id as string;
             if (deletedId) {
@@ -299,6 +329,7 @@ const ShoppingList = forwardRef<ShoppingListHandle, Props>(function ShoppingList
                       onToggle={handleToggle}
                       onEdit={handleEdit}
                       onDelete={() => handleDelete(item.id)}
+                      canEdit={canEdit}
                     />
                     {showIndicatorAfter && (
                       <div

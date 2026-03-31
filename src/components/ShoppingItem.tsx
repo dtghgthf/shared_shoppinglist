@@ -11,6 +11,7 @@ interface Props {
   onToggle: (itemId: string) => void;
   onEdit: (itemId: string, newText: string) => void;
   onDelete: () => void;
+  canEdit?: boolean;
 }
 
 export default function ShoppingItem({
@@ -19,6 +20,7 @@ export default function ShoppingItem({
   onToggle,
   onEdit,
   onDelete,
+  canEdit = true,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
@@ -44,6 +46,7 @@ export default function ShoppingItem({
   };
 
   function handleDoubleClick(e: React.MouseEvent) {
+    if (!canEdit) return;
     e.stopPropagation();
     setEditText(item.text);
     setIsEditing(true);
@@ -68,11 +71,13 @@ export default function ShoppingItem({
   }
 
   function handleToggle(e: React.MouseEvent) {
+    if (!canEdit) return;
     e.stopPropagation();
     onToggle(item.id);
   }
 
   async function handleDelete(e: React.MouseEvent) {
+    if (!canEdit) return;
     e.stopPropagation();
     e.preventDefault();
     onDelete();
