@@ -143,7 +143,7 @@ export async function getListMembers(listId: string): Promise<ListMember[]> {
 
   // Get all profiles for these users
   const userIdsArray = Array.from(userIds);
-  let allMembers: ListMember[] = [];
+  const allMembers: ListMember[] = [];
 
   if (userIdsArray.length > 0) {
     const { data: profiles, error: profileError } = await supabase
@@ -542,7 +542,7 @@ export async function getListMembersWithEmails(listId: string): Promise<ListMemb
     return getListMembers(listId);
   }
 
-  const mapped = (membersWithEmails || []).map((m: any) => ({
+  const mapped = (membersWithEmails || []).map((m: { user_id: string; role: string; joined_at: string; display_name?: string; email?: string; avatar_url?: string }) => ({
     user_id: m.user_id,
     role: m.role,
     joined_at: m.joined_at,

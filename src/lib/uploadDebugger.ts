@@ -76,7 +76,7 @@ export class UploadDebugger {
   public async logError(
     fileName: string,
     error: Error,
-    context: Record<string, any>
+    context: Record<string, unknown>
   ) {
     // Only log in development environment
     if (!this.isDevelopment) {

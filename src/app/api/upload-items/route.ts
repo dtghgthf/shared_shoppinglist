@@ -8,6 +8,21 @@ export async function POST(request: Request) {
   const startTime = Date.now();
   const debugLog = new UploadDebugger();
   
+  // Validate required environment variables
+  if (!process.env.OPENROUTER_API_KEY) {
+    return NextResponse.json(
+      { error: "Upload-Service nicht konfiguriert" },
+      { status: 503 }
+    );
+  }
+
+  if (!process.env.NEXT_PUBLIC_APP_URL) {
+    return NextResponse.json(
+      { error: "Upload-Service nicht konfiguriert" },
+      { status: 503 }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
@@ -53,7 +68,11 @@ export async function POST(request: Request) {
     const mimeType = file.type;
     const fileSize = buffer.byteLength;
 
-    let content: Array<{ type: string; [key: string]: any }>;
+    let content: Array<{
+      type: string;
+      source?: { type: string; media_type: string; data: string };
+      text?: string;
+    }>;
 
     const existingItemsText =
       existingList.length > 0

@@ -13,12 +13,15 @@ function applyTheme(dark: boolean) {
 }
 
 export default function DarkModeToggle() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    // Initialize from what the inline script already applied
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains("dark");
+    }
+    return false;
+  });
 
   useEffect(() => {
-    // Sync initial state from what the inline script already applied
-    setDark(document.documentElement.classList.contains("dark"));
-
     // Sync changes made in other tabs
     function onStorage(e: StorageEvent) {
       if (e.key === "theme" && e.newValue) {

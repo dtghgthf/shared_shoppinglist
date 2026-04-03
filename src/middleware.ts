@@ -21,10 +21,7 @@ function handleAdminAuth(request: NextRequest) {
   const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (!adminPassword) {
-    console.warn(
-      "⚠️ ADMIN_PASSWORD not set in environment. Admin routes are not protected."
-    );
-    return NextResponse.next();
+    return new NextResponse("Admin routes not configured", { status: 503 });
   }
 
   // Check Basic Auth

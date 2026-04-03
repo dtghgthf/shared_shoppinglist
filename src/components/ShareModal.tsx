@@ -31,23 +31,16 @@ export default function ShareModal({
 }: Props) {
   const [dataUrl, setDataUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-  const [canShare, setCanShare] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("share");
-
-  // Show settings tab by default for owners, share tab for others
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(isOwner ? "settings" : "share");
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains("dark");
     }
-  }, [isOpen, isOwner]);
+    return false;
+  });
+  const canShare = typeof navigator !== "undefined" && "share" in navigator;
+  const [activeTab, setActiveTab] = useState<Tab>(() => isOwner ? "settings" : "share");
 
   useEffect(() => {
-    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
-  }, []);
-
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
     const observer = new MutationObserver(() => {
       setIsDark(document.documentElement.classList.contains("dark"));
     });
@@ -55,6 +48,22 @@ export default function ShareModal({
     return () => observer.disconnect();
   }, []);
 
+  // Handle body overflow when modal opens/closes
+  // Reset tab to correct value when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveTab(isOwner ? "settings" : "share");
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, isOwner]);
+
+  // Generate QR code when URL or dark mode changes
   useEffect(() => {
     const dark = isDark ? "#f0efe8" : "#141413";
     const light = isDark ? "#1a1918" : "#f5f4ed";
@@ -64,17 +73,6 @@ export default function ShareModal({
       color: { dark, light },
     }).then(setDataUrl);
   }, [url, isDark]);
-
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(url);

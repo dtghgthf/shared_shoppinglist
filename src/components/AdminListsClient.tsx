@@ -30,7 +30,7 @@ export default function AdminListsClient({ initialLists }: Props) {
     }).format(date);
   }
 
-  async function handleDelete(id: string, name: string) {
+  async function handleDelete(id: string) {
     setLoading(true);
     try {
       const response = await fetch("/api/admin/lists", {
@@ -122,7 +122,7 @@ export default function AdminListsClient({ initialLists }: Props) {
                   {deleteConfirm === list.id ? (
                     <div className="flex gap-1">
                       <button
-                        onClick={() => handleDelete(list.id, list.name)}
+                        onClick={() => handleDelete(list.id)}
                         disabled={loading}
                         className="px-3 py-1.5 text-xs rounded-[4px] font-medium transition-opacity disabled:opacity-60"
                         style={{ backgroundColor: "#d97757", color: "white" }}

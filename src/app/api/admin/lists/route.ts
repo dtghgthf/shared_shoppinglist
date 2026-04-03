@@ -21,7 +21,7 @@ export async function GET() {
     if (listsError) throw listsError;
 
     // Transform: extract item count from nested structure
-    const transformedLists = (lists || []).map((list: any) => ({
+    const transformedLists = (lists || []).map((list: { id: string; name: string; created_at: string; items?: Array<{ count: number }> }) => ({
       id: list.id,
       name: list.name,
       created_at: list.created_at,

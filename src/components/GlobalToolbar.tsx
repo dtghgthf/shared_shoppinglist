@@ -53,8 +53,8 @@ export default function GlobalToolbar() {
   useEffect(() => {
     // Poll for list data changes (set by ListPageWrapper)
     const checkListData = () => {
-      const data = (window as any).__listToolbarData;
-      setListData(data);
+      const data = (window as unknown as { __listToolbarData?: ListData }).__listToolbarData;
+      setListData(data || null);
     };
     
     checkListData();

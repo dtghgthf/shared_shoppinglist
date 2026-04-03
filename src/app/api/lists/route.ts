@@ -84,7 +84,7 @@ export async function DELETE(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const userId = await getCurrentUserId();
     console.log("[POST /api/lists] userId:", userId);

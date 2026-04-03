@@ -17,8 +17,8 @@ export default function EditableListName({ listId, initialName }: { listId: stri
       // Update localStorage history with new name
       const rawHistory = localStorage.getItem("shopping_list_history");
       if (rawHistory) {
-        const history = JSON.parse(rawHistory);
-        const item = history.find((h: any) => h.id === listId);
+        const history: Array<{ id: string; name: string }> = JSON.parse(rawHistory);
+        const item = history.find((h) => h.id === listId);
         if (item) {
           item.name = name;
           localStorage.setItem("shopping_list_history", JSON.stringify(history));
