@@ -113,20 +113,27 @@ export async function POST() {
     console.log("[POST /api/lists] Creating list:", { id, name, owner_id: userId, visibility: userId ? "private" : "link_write" });
 
     // Set owner_id if user is logged in, otherwise create unclaimed list
+    const insertData = {
+      id,
+      name,
+      owner_id: userId,
+      visibility: userId ? "private" : "link_write" // Unclaimed lists are writable by anyone
+    };
+
+    console.log("[POST /api/lists] Insert data:", JSON.stringify(insertData, null, 2));
+
     const { data, error } = await supabase
       .from("lists")
-      .insert({ 
-        id, 
-        name,
-        owner_id: userId,
-        visibility: userId ? "private" : "link_write" // Unclaimed lists are writable by anyone
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
-      console.error("[POST /api/lists] Insert error:", error);
-      throw error;
+      console.error("[POST /api/lists] Insert error:", JSON.stringify(error, null, 2));
+      return NextResponse.json(
+        { error: `Database error: ${error.code} - ${error.message}`, details: error },
+        { status: 500 }
+      );
     }
 
     console.log("[POST /api/lists] Success:", data);
