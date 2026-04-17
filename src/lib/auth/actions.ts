@@ -16,6 +16,28 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
+async function ensureProfile(supabase: any, userId: string, email: string) {
+  // Check if profile exists
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .single();
+
+  if (!existing) {
+    // Create profile if it doesn't exist
+    const { error } = await supabase.from("profiles").insert({
+      id: userId,
+      display_name: email.split("@")[0],
+      email: email,
+    });
+
+    if (error) {
+      console.error("Profile creation error:", error);
+    }
+  }
+}
+
 export async function signInWithEmail(
   _prevState: AuthState,
   formData: FormData
@@ -34,12 +56,15 @@ export async function signInWithEmail(
 
     const supabase = await createServerClient();
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      // Log full error for debugging
+      console.error("Supabase signIn error:", JSON.stringify(error, null, 2));
+
       // Handle specific Supabase error codes
       if (
         error.message.toLowerCase().includes("invalid") ||
@@ -47,9 +72,17 @@ export async function signInWithEmail(
       ) {
         return { error: "E-Mail oder Passwort ist falsch." };
       }
+
+      // Show actual error message for debugging
+      const errorCode = error.code ? `[${error.code}] ` : "";
       return {
-        error: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+        error: `Fehler: ${errorCode}${error.message}`,
       };
+    }
+
+    // Ensure profile exists after successful login
+    if (data.user) {
+      await ensureProfile(supabase, data.user.id, data.user.email || email);
     }
 
     redirect("/");
@@ -97,24 +130,32 @@ export async function signUpWithEmail(
 
     const supabase = await createServerClient();
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) {
+      // Log full error for debugging
+      console.error("Supabase signUp error:", JSON.stringify(error, null, 2));
+
       // Handle specific Supabase error codes
       if (
         error.message.toLowerCase().includes("already registered") ||
         error.message.toLowerCase().includes("user already exists") ||
-        error.message.toLowerCase().includes("email already in use")
+        error.message.toLowerCase().includes("email already in use") ||
+        error.code === "user_already_exists"
       ) {
         return { error: "Diese E-Mail ist bereits registriert." };
       }
+
+      // Show actual error message for debugging
+      const errorCode = error.code ? `[${error.code}] ` : "";
       return {
-        error: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+        error: `Fehler: ${errorCode}${error.message}`,
       };
     }
+
 
     return {
       success: true,
