@@ -84,14 +84,19 @@ export async function signInWithEmail(
     if (data.user) {
       await ensureProfile(supabase, data.user.id, data.user.email || email);
     }
-
-    redirect("/");
   } catch (error) {
+    // Re-throw redirect errors
+    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+      throw error;
+    }
     console.error("Sign in error:", error);
     return {
       error: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
     };
   }
+
+  // Redirect after successful login (outside try-catch)
+  redirect("/");
 }
 
 export async function signUpWithEmail(
@@ -175,6 +180,8 @@ export async function signInWithOAuth(provider: "google" | "github" | "apple") {
   const headersList = await headers();
   const origin = headersList.get("origin") || process.env.NEXT_PUBLIC_APP_URL;
 
+  let oauthUrl: string | null = null;
+
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -191,17 +198,18 @@ export async function signInWithOAuth(provider: "google" | "github" | "apple") {
     }
 
     if (data.url) {
-      redirect(data.url);
+      oauthUrl = data.url;
     }
   } catch (error) {
-    // Re-throw Next.js redirect errors
-    if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
-      throw error;
-    }
     console.error("OAuth error:", error);
     return {
       error: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
     };
+  }
+
+  // Redirect outside of try-catch
+  if (oauthUrl) {
+    redirect(oauthUrl);
   }
 }
 
