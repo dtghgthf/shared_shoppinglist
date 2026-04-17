@@ -86,6 +86,15 @@ export async function signUpWithEmail(
       return { error: "Passwort muss mindestens 6 Zeichen lang sein." };
     }
 
+    // Debug: Check if env vars are available
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error("Missing Supabase env vars:", {
+        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        key: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      });
+      return { error: "Server-Konfigurationsfehler: Supabase nicht konfiguriert." };
+    }
+
     const supabase = await createServerClient();
 
     const { error } = await supabase.auth.signUp({
@@ -113,8 +122,9 @@ export async function signUpWithEmail(
     };
   } catch (error) {
     console.error("Sign up error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
-      error: "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+      error: `Fehler: ${errorMessage}`,
     };
   }
 }
