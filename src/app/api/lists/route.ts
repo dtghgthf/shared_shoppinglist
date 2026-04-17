@@ -85,44 +85,28 @@ export async function DELETE(request: Request) {
 }
 
 export async function POST() {
-  console.log("[POST /api/lists] ===== Starting request =====");
-
   try {
-    console.log("[POST /api/lists] Step 1: Getting userId...");
     const userId = await getCurrentUserId();
-    console.log("[POST /api/lists] Step 2: userId =", userId);
+    console.log("[POST /api/lists] userId:", userId);
     
     const date = new Date();
     const dateStr = date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" });
 
     // Count lists created today
-    console.log("[POST /api/lists] Step 7: Creating date...");
+    // Count lists created today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    console.log("[POST /api/lists] Step 8: Creating Supabase client...");
     const supabase = await createServerClient();
-    console.log("[POST /api/lists] Step 9: Supabase client created");
 
     const { count, error: countError } = await supabase
       .from("lists")
       .select("*", { count: "exact", head: true })
       .gte("created_at", today.toISOString());
 
-    if (countError) {
-      console.error("[POST /api/lists] Count error:", countError);
-    }
-
-    console.log("[POST /api/lists] Step 3: Count =", count);
-
     const index = (count || 0) + 1;
     const name = `Einkaufsliste vom ${dateStr} (Nr. ${index})`;
-
-    console.log("[POST /api/lists] Step 4: Generating ID...");
     const id = generateListId();
-    console.log("[POST /api/lists] Step 5: ID =", id);
-
-    console.log("[POST /api/lists] Step 6: Creating list:", { id, name, owner_id: userId, visibility: userId ? "private" : "link_write" });
 
     // Set owner_id if user is logged in, otherwise create unclaimed list
     const insertData = {
@@ -132,8 +116,6 @@ export async function POST() {
       visibility: userId ? "private" : "link_write" // Unclaimed lists are writable by anyone
     };
 
-    console.log("[POST /api/lists] Insert data:", JSON.stringify(insertData, null, 2));
-
     const { data, error } = await supabase
       .from("lists")
       .insert(insertData)
@@ -141,48 +123,23 @@ export async function POST() {
       .single();
 
     if (error) {
-      console.error("[POST /api/lists] Insert error:", JSON.stringify(error, null, 2));
-
-      // If FK constraint failed (user doesn't exist in auth.users), create unclaimed list
-      if (error.code === "23503") {
-        console.log("[POST /api/lists] User not found in auth.users, creating unclaimed list...");
-
-        const unclaimedInsertData = {
-          id,
-          name,
-          owner_id: null,  // Unclaimed
-          visibility: "link_write" as const
-        };
-
-        const { data: unclaimedData, error: unclaimedError } = await supabase
-          .from("lists")
-          .insert(unclaimedInsertData)
-          .select()
-          .single();
-
-        if (unclaimedError) {
-          console.error("[POST /api/lists] Unclaimed insert error:", JSON.stringify(unclaimedError, null, 2));
-          return NextResponse.json(
-            { error: `Database error: ${unclaimedError.code} - ${unclaimedError.message}` },
-            { status: 500 }
-          );
-        }
-
-        console.log("[POST /api/lists] Unclaimed list created:", unclaimedData);
-        return NextResponse.json(unclaimedData, { status: 201 });
+      // If FK constraint failed (user doesn't exist in auth.users), ask user to re-login
+      if (error.code === "23503" && userId) {
+        return NextResponse.json(
+          { error: "Sitzung abgelaufen. Bitte melde dich erneut an.", code: "SESSION_INVALID" },
+          { status: 401 }
+        );
       }
 
       return NextResponse.json(
-        { error: `Database error: ${error.code} - ${error.message}`, details: error },
+        { error: `Database error: ${error.code} - ${error.message}` },
         { status: 500 }
       );
     }
 
-    console.log("[POST /api/lists] Success:", data);
     return NextResponse.json(data, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[POST /api/lists] Exception:", err);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
